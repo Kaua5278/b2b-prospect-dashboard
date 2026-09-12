@@ -132,13 +132,17 @@ export default function ProspectPage() {
     <div className="space-y-6">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
         className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <p className="text-[11px] font-medium uppercase tracking-widest text-emerald-400/80">Prospecção ativa</p>
+          </div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">
             Nova Prospecção
           </h1>
           <p className="mt-1 text-slate-400">
@@ -147,10 +151,12 @@ export default function ProspectPage() {
         </div>
         <div className="flex items-center gap-2">
           {searchParams && (
-            <Button variant="outline" size="sm" onClick={handleRetrySearch} disabled={isLoading} className="gap-1">
-              <RefreshCw className="h-4 w-4" />
-              Repetir Busca
-            </Button>
+            <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}>
+              <Button variant="outline" size="sm" onClick={handleRetrySearch} disabled={isLoading} className="gap-1">
+                <RefreshCw className="h-4 w-4" />
+                Repetir Busca
+              </Button>
+            </motion.div>
           )}
         </div>
       </motion.div>
@@ -299,18 +305,28 @@ function StatCard({ icon: Icon, value, label, color }: { icon: React.ComponentTy
   };
 
   return (
-    <Card className={`${colors[color]} border glass-card`}>
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-3xl font-bold text-white">{value}</p>
-            <p className="text-sm text-slate-400 mt-1">{label}</p>
+    <motion.div
+      whileHover={{ y: -3, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <Card className={`${colors[color]} border glass-card overflow-hidden group`}>
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-3xl font-bold text-white tabular-nums">{value}</p>
+              <p className="text-sm text-slate-400 mt-1">{label}</p>
+            </div>
+            <motion.div
+              whileHover={{ rotate: 8, scale: 1.08 }}
+              className={`p-3 rounded-xl ${colors[color].replace('text-', 'bg-')}`}
+            >
+              <Icon className="h-6 w-6 text-white" />
+            </motion.div>
           </div>
-          <div className={`p-3 rounded-xl ${colors[color].replace('text-', 'bg-')}`}>
-            <Icon className="h-6 w-6 text-white" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          <div className={`absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r ${color === 'cyan' ? 'from-cyan-400' : color === 'emerald' ? 'from-emerald-400' : 'from-blue-400'} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

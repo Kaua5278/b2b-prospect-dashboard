@@ -218,80 +218,88 @@ export function LeadCard({ lead, onContact, onGeneratePitch, index }: LeadCardPr
 
               {/* Actions */}
               <div className="flex flex-col sm:grid sm:grid-cols-2 xl:flex xl:flex-row gap-2 shrink-0 xl:w-auto w-full sm:w-auto">
-                <a
-                  href={mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full xl:w-auto"
-                  title="Abrir perfil do Google e localização"
-                >
-                  <Button variant="outline" size="lg" className="w-full justify-center border-sky-500/30 text-sky-400 hover:bg-sky-500/10 group">
-                    <Map className="h-4 w-4 mr-2" />
-                    Ver no Google
-                    <ExternalLink className="h-3.5 w-3.5 ml-1 opacity-70" />
+                <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} className="w-full xl:w-auto">
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full xl:w-auto"
+                    title="Abrir perfil do Google e localização"
+                  >
+                    <Button variant="outline" size="lg" className="w-full justify-center border-sky-500/30 text-sky-400 hover:bg-sky-500/10 group">
+                      <Map className="h-4 w-4 mr-2" />
+                      Ver no Google
+                      <ExternalLink className="h-3.5 w-3.5 ml-1 opacity-70" />
+                    </Button>
+                  </a>
+                </motion.div>
+
+                <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
+                  <Button
+                    variant="cyan"
+                    size="lg"
+                    className="w-full group"
+                    onClick={handleContact}
+                    disabled={isContacting}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {isContacting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Marcando...
+                      </>
+                    ) : (
+                      'Marcar como Contatado'
+                    )}
                   </Button>
-                </a>
+                </motion.div>
 
-                <Button
-                  variant="cyan"
-                  size="lg"
-                  className="w-full group"
-                  onClick={handleContact}
-                  disabled={isContacting}
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  {isContacting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Marcando...
-                    </>
-                  ) : (
-                    'Marcar como Contatado'
-                  )}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 group"
-                  onClick={handleGeneratePitch}
-                  disabled={isGeneratingPitch}
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  {isGeneratingPitch ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Gerando...
-                    </>
-                  ) : (
-                    'Gerar Pitch'
-                  )}
-                </Button>
+                <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 group"
+                    onClick={handleGeneratePitch}
+                    disabled={isGeneratingPitch}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    {isGeneratingPitch ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Gerando...
+                      </>
+                    ) : (
+                      'Gerar Pitch'
+                    )}
+                  </Button>
+                </motion.div>
 
                 {hasPhone ? (
-                  <Button
-                    variant="success"
-                    size="lg"
-                    className="w-full xl:w-auto justify-center group"
-                    onClick={handleOpenWhatsApp}
-                    disabled={isOpeningWhatsApp}
-                  >
-                    {isOpeningWhatsApp ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                    )}
-                    {isOpeningWhatsApp ? 'Gerando pitch...' : 'Enviar Mensagem'}
-                    {!isOpeningWhatsApp && (
-                      <motion.span
-                        animate={{ x: [0, 4, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="ml-2"
-                      >
-                        →
-                      </motion.span>
-                    )}
-                  </Button>
+                  <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} className="btn-shine">
+                    <Button
+                      variant="success"
+                      size="lg"
+                      className="w-full xl:w-auto justify-center group"
+                      onClick={handleOpenWhatsApp}
+                      disabled={isOpeningWhatsApp}
+                    >
+                      {isOpeningWhatsApp ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                      )}
+                      {isOpeningWhatsApp ? 'Gerando pitch...' : 'Enviar Mensagem'}
+                      {!isOpeningWhatsApp && (
+                        <motion.span
+                          animate={{ x: [0, 4, 0] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                          className="ml-2"
+                        >
+                          →
+                        </motion.span>
+                      )}
+                    </Button>
+                  </motion.div>
                 ) : (
                   <Button variant="outline" size="lg" disabled className="w-full xl:w-auto opacity-50 cursor-not-allowed">
                     <MessageSquare className="h-4 w-4 mr-2" />

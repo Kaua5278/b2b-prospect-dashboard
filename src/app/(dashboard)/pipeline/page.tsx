@@ -179,23 +179,29 @@ export default function PipelinePage() {
     <div className="space-y-6">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
         className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <p className="text-[11px] font-medium uppercase tracking-widest text-emerald-400/80">Funil de vendas</p>
+          </div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">
             Pipeline de Vendas
           </h1>
           <p className="mt-1 text-slate-400">
             Gerencie seus leads contatados e acompanhe o funil de vendas
           </p>
         </div>
-        <Button variant="outline" onClick={loadLeads} disabled={isLoading} className="gap-1">
-          <RefreshCw className="h-4 w-4" />
-          Atualizar
-        </Button>
+        <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}>
+          <Button variant="outline" onClick={loadLeads} disabled={isLoading} className="gap-1">
+            <RefreshCw className="h-4 w-4" />
+            Atualizar
+          </Button>
+        </motion.div>
       </motion.div>
 
       {/* Search */}
