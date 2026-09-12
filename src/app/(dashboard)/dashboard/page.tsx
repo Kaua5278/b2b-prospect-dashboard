@@ -126,6 +126,10 @@ export default function DashboardPage() {
   const [editNotes, setEditNotes] = useState('');
   const [deletingLead, setDeletingLead] = useState<string | null>(null);
 
+  // Clear database state
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+
   const supabase = createClient();
 
   // ── Load leads from Supabase on mount ──────────────────────────────────
@@ -297,6 +301,33 @@ export default function DashboardPage() {
     setDeletingLead(null);
   };
 
+  // ── Database: Clear all leads (plano gratuito Supabase) ────────────────
+  const handleClearDatabase = async () => {
+    setIsClearing(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await fetch('/api/leads/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: true }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao limpar banco');
+      }
+
+      setLeads([]);
+      setShowClearDialog(false);
+      setSuccess(`Banco limpo! ${data.deleted} leads removidos.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao limpar banco');
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   // ── Pipeline: Filtered Leads ───────────────────────────────────────────
   const filteredPipelineLeads = useMemo(() => {
     return leads.filter(lead => {
@@ -403,6 +434,20 @@ export default function DashboardPage() {
               <Button variant="outline" size="sm" onClick={loadPipelineLeads} disabled={isLoading} className="gap-1">
                 <RefreshCw className="h-4 w-4" />
                 Atualizar
+              </Button>
+            </motion.div>
+          )}
+          {leads.length > 0 && (
+            <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowClearDialog(true)}
+                className="gap-1 text-red-400/80 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/30"
+                title="Limpar todos os leads (libera espaço no plano gratuito)"
+              >
+                <Trash2 className="h-4 w-4" />
+                Limpar Banco
               </Button>
             </motion.div>
           )}
@@ -976,6 +1021,49 @@ export default function DashboardPage() {
         }}
         lead={selectedLead}
       />
+
+      {/* ── Clear Database Dialog ──────────────────────────────────────── */}
+      <Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/15 border border-red-500/30">
+                <Trash2 className="h-4 w-4 text-red-400" />
+              </span>
+              Limpar Banco de Dados
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-400 pt-2">
+              Isso vai excluir <span className="font-medium text-white">{leads.length} leads</span> permanentemente
+              do seu banco Supabase. Esta ação <span className="text-red-400 font-medium">não pode ser desfeita</span>.
+              <br /><br />
+              Útil no plano gratuito para liberar espaço de linhas.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setShowClearDialog(false)} disabled={isClearing}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleClearDatabase}
+              disabled={isClearing}
+              className="gap-1.5"
+            >
+              {isClearing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Limpando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Sim, limpar tudo
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
