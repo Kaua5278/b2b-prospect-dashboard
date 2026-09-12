@@ -9,9 +9,22 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Auth check (apenas usuário autenticado de verdade)
+    // Auth check — aceita cookie de sessão (browser) OU Bearer token (client externo)
     const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    // Fallback: tenta autenticar via Authorization header (Bearer)
+    if ((authError || !user) && request.headers.get('authorization')) {
+      try {
+        const token = request.headers.get('authorization')!.replace('Bearer ', '');
+        const { data: userData, error: tokenError } = await supabase.auth.getUser(token);
+        if (!tokenError && userData?.user) {
+          user = userData.user;
+          authError = null;
+        }
+      } catch { /* token inválido */ }
+    }
+
     if (authError || !user) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
