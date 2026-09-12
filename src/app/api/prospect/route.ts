@@ -87,38 +87,58 @@ export async function POST(request: NextRequest) {
     const prioritizedLeads = withPhone.slice(0, 200);
 
     // Save to database (skip if Supabase offline)
+    let savedIds: string[] = [];
     if (prioritizedLeads.length > 0 && supabase) {
       try {
+        // Upsert sem sobrescrever leads já existentes
         await supabase
-        .from('leads')
-        .upsert(
-          prioritizedLeads.map(lead => ({
-            user_id: user.id,
-            place_id: lead.place_id,
-            company_name: lead.company_name,
-            trade_name: lead.trade_name,
-            cnpj: null, // OSM não tem CNPJ
-            niche: lead.niche || niche,
-            country_code: 'BR',
-            state: lead.state,
-            city: lead.city,
-            address: lead.formatted_address,
-            latitude: lead.gps_coordinates?.latitude ?? null,
-            longitude: lead.gps_coordinates?.longitude ?? null,
-            phone_number: lead.phone_number ? normalizePhoneBR(lead.phone_number) : '',
-            phone_type: detectPhoneType(lead.phone_number),
-            decision_maker_name: null, // OSM não tem sócios
-            has_website: !!(lead.website && !isSocialWebsite(lead.website)),
-            status: 'new',
-          })),
-          { onConflict: 'user_id,place_id', ignoreDuplicates: true }
-        );
+          .from('leads')
+          .upsert(
+            prioritizedLeads.map(lead => ({
+              user_id: user.id,
+              place_id: lead.place_id,
+              company_name: lead.company_name,
+              trade_name: lead.trade_name,
+              cnpj: null, // OSM não tem CNPJ
+              niche: lead.niche || niche,
+              country_code: 'BR',
+              state: lead.state,
+              city: lead.city,
+              address: lead.formatted_address,
+              latitude: lead.gps_coordinates?.latitude ?? null,
+              longitude: lead.gps_coordinates?.longitude ?? null,
+              phone_number: lead.phone_number ? normalizePhoneBR(lead.phone_number) : '',
+              phone_type: detectPhoneType(lead.phone_number),
+              decision_maker_name: null, // OSM não tem sócios
+              has_website: !!(lead.website && !isSocialWebsite(lead.website)),
+              status: 'new',
+            })),
+            { onConflict: 'user_id,place_id', ignoreDuplicates: true }
+          );
+
+        // Busca os ids reais dos leads (para update/delete por id no frontend)
+        const { data: idRows } = await supabase
+          .from('leads')
+          .select('id, place_id')
+          .eq('user_id', user.id)
+          .in('place_id', prioritizedLeads.map(l => l.place_id));
+
+        if (idRows && idRows.length > 0) {
+          const idByPlace = new Map(idRows.map((row: any) => [row.place_id, row.id]));
+          savedIds = prioritizedLeads.map(l => idByPlace.get(l.place_id) as string).filter(Boolean);
+        }
       } catch { /* Supabase save failed, continue */ }
     }
 
+    // Associa o id do banco a cada lead (se disponível) para permitir
+    // update/delete por id no frontend
+    const leadsWithId = savedIds.length > 0 && savedIds.length === prioritizedLeads.length
+      ? prioritizedLeads.map((lead, i) => ({ ...lead, id: savedIds[i] }))
+      : prioritizedLeads;
+
     return NextResponse.json({ 
-      leads: prioritizedLeads,
-      count: prioritizedLeads.length,
+      leads: leadsWithId,
+      count: leadsWithId.length,
       totalFound: osmLeads.length,
       qualifiedCount: qualification.qualified.length,
       discardedCount: qualification.discarded.length,

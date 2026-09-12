@@ -328,6 +328,10 @@ function parseOSMElement(el: any, city: string, state: string): OSMPlace | null 
     tags['addr:postcode'],
   ].filter(Boolean);
 
+  // Cidade real: usa addr:city quando presente, senão o filtro da busca
+  const realCity = tags['addr:city'] || tags['addr:suburb'] || city || '';
+  const realState = tags['addr:state'] || state || '';
+
   return {
     place_id: `osm_${el.type}_${el.id}`,
     company_name: name,
@@ -337,8 +341,8 @@ function parseOSMElement(el: any, city: string, state: string): OSMPlace | null 
     website,
     gps_coordinates: (lat && lon) ? { latitude: lat, longitude: lon } : undefined,
     niche: tags.shop || tags.amenity || tags.craft || tags.office || tags.tourism,
-    city,
-    state,
+    city: realCity,
+    state: realState,
     country_code: 'BR',
     tags,
   };

@@ -214,8 +214,9 @@ export default function DashboardPage() {
   };
 
   // ── Auth: Logout ──────────────────────────────────────────────────────
-  const handleLogout = () => {
+  const handleLogout = async () => {
     document.cookie = 'sb-mock-auth=; path=/; max-age=0';
+    try { await supabase.auth.signOut(); } catch { /* ignore */ }
     window.location.href = '/login';
   };
 
@@ -300,13 +301,14 @@ export default function DashboardPage() {
   const filteredPipelineLeads = useMemo(() => {
     return leads.filter(lead => {
       const matchesTab = pipelineTab === 'all' || lead.status === pipelineTab;
+      const q = pipelineSearch.toLowerCase();
       const matchesSearch = !pipelineSearch ||
-        lead.company_name.toLowerCase().includes(pipelineSearch.toLowerCase()) ||
-        lead.trade_name?.toLowerCase().includes(pipelineSearch.toLowerCase()) ||
-        lead.decision_maker_name?.toLowerCase().includes(pipelineSearch.toLowerCase()) ||
-        lead.city.toLowerCase().includes(pipelineSearch.toLowerCase()) ||
-        lead.niche.toLowerCase().includes(pipelineSearch.toLowerCase()) ||
-        lead.phone_number.includes(pipelineSearch.replace(/\D/g, ''));
+        lead.company_name.toLowerCase().includes(q) ||
+        lead.trade_name?.toLowerCase().includes(q) ||
+        lead.decision_maker_name?.toLowerCase().includes(q) ||
+        (lead.city || '').toLowerCase().includes(q) ||
+        (lead.niche || '').toLowerCase().includes(q) ||
+        (lead.phone_number || '').includes(pipelineSearch.replace(/\D/g, ''));
       return matchesTab && matchesSearch;
     });
   }, [leads, pipelineTab, pipelineSearch]);
@@ -322,7 +324,9 @@ export default function DashboardPage() {
   // ── Analytics Stats ────────────────────────────────────────────────────
   const analytics = useMemo(() => {
     const total = leads.length;
-    const contacted = leads.filter(l => l.status !== 'new').length;
+    // Contatados = leads que passaram do estágio "novo" (prospecção ativa de fato)
+    // Exclui descartados (nunca foram contatados)
+    const contacted = leads.filter(l => ['contacted', 'replied', 'negotiating', 'closed_won', 'closed_lost'].includes(l.status)).length;
     const replied = leads.filter(l => ['replied', 'negotiating', 'closed_won'].includes(l.status)).length;
     const negotiating = leads.filter(l => l.status === 'negotiating').length;
     const closedWon = leads.filter(l => l.status === 'closed_won').length;
@@ -352,6 +356,7 @@ export default function DashboardPage() {
     if (digits.length === 12 && digits.startsWith('55')) return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 8)}-${digits.slice(8)}`;
     if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
     if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    if (digits.length === 9) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
     return phone;
   };
 

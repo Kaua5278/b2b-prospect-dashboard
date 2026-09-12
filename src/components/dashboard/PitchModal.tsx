@@ -47,17 +47,16 @@ export function PitchModal({ isOpen, onClose, lead }: PitchModalProps) {
           trade_name: lead.trade_name,
           decision_maker_name: lead.decision_maker_name,
           niche: lead.niche,
-          city: lead.city,
-          state: lead.state,
+          city: lead.city || '',
+          state: lead.state || '',
           channel: activeTab,
         }),
       });
       const data = await response.json();
       if (data.success && data.data?.pitch) {
         setPitch(data.data.pitch);
-      } else if (data.fallback) {
-        setPitch(data.fallback);
       } else {
+        // Se a API falhou ou faltou campo (ex: cidade vazia), usa o template local
         setPitch(getFallbackPitch(lead, activeTab));
       }
     } catch (error) {
@@ -72,11 +71,14 @@ export function PitchModal({ isOpen, onClose, lead }: PitchModalProps) {
     if (!lead) return '';
     const name = lead.decision_maker_name ? `Olá, ${lead.decision_maker_name.split(' ')[0]}` : 'Olá';
     const company = lead.trade_name || lead.company_name;
-    
+    const location = [lead.city, lead.state].filter(Boolean).join('/');
+    const locTxt = location ? ` aqui em ${location}` : '';
+    const emailSubject = location ? ` - ${lead.niche} em ${lead.city || lead.state}` : ` - ${lead.niche}`;
+
     const pitches = {
       whatsapp: `${name}! Tudo bem? 👋
 
-Vi que a ${company} atua no nicho de ${lead.niche} aqui em ${lead.city}/${lead.state} e notei que ainda não têm um site próprio.
+Vi que a ${company} atua no nicho de ${lead.niche}${locTxt} e notei que ainda não têm um site próprio.
 
 Hoje, 9 em cada 10 clientes pesquisam no Google antes de contratar. Sem site, você perde credibilidade e deixa de aparecer para quem está procurando exatamente o que você oferece.
 
@@ -85,11 +87,11 @@ Ajudamos empresas como a sua a terem presença digital profissional em poucos di
 Topa uma conversa rápida de 10 min para eu mostrar como funciona? Sem compromisso.
 
 Abs!`,
-      email: `Assunto: Site para ${company} - ${lead.niche} em ${lead.city}
+      email: `Assunto: Site para ${company}${emailSubject}
 
 ${name},
 
-Escrevo porque identifiquei a ${company} como uma excelente oportunidade no segmento de ${lead.niche} em ${lead.city}/${lead.state}.
+Escrevo porque identifiquei a ${company} como uma excelente oportunidade no segmento de ${lead.niche}${locTxt}.
 
 Notei que a empresa ainda não possui um site próprio - apenas perfis em redes sociais. O problema: 90% dos clientes B2B pesquisam no Google antes de fechar negócio. Sem site, você fica invisível para quem tem intenção de compra.
 
@@ -103,7 +105,7 @@ Gostaria de agendar 15 minutos para mostrar cases reais do seu nicho?
 
 Melhores cumprimentos,
 [Seu Nome]`,
-      linkedin: `${name}, vi seu perfil e a atuação da ${company} em ${lead.niche} aqui em ${lead.city}. 
+      linkedin: `${name}, vi seu perfil e a atuação da ${company} em ${lead.niche}${locTxt}. 
 
 Notei que a empresa ainda não tem site próprio - apenas redes sociais. Para B2B, isso significa perder leads qualificados que buscam no Google.
 

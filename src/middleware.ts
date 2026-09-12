@@ -56,7 +56,11 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isAuthRoute = pathname === '/login';
-  const isDashboardRoute = pathname === '/dashboard' || pathname.startsWith('/dashboard/');
+  // Protege TODAS as rotas do grupo (dashboard): /dashboard, /prospect, /pipeline
+  const isDashboardRoute =
+    pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
+    pathname === '/prospect' || pathname.startsWith('/prospect/') ||
+    pathname === '/pipeline' || pathname.startsWith('/pipeline/');
 
   // Em modo mock: verifica cookie de auth fake
   const mockAuth = request.cookies.get('sb-mock-auth')?.value;

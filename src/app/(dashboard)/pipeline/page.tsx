@@ -93,13 +93,14 @@ export default function PipelinePage() {
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       const matchesTab = activeTab === 'all' || lead.status === activeTab;
+      const q = searchQuery.toLowerCase();
       const matchesSearch = !searchQuery || 
-        lead.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.trade_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.decision_maker_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.niche.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.phone_number.includes(searchQuery.replace(/\D/g, ''));
+        lead.company_name.toLowerCase().includes(q) ||
+        lead.trade_name?.toLowerCase().includes(q) ||
+        lead.decision_maker_name?.toLowerCase().includes(q) ||
+        (lead.city || '').toLowerCase().includes(q) ||
+        (lead.niche || '').toLowerCase().includes(q) ||
+        (lead.phone_number || '').includes(searchQuery.replace(/\D/g, ''));
       return matchesTab && matchesSearch;
     });
   }, [leads, activeTab, searchQuery]);
@@ -497,7 +498,7 @@ export default function PipelinePage() {
 }
 
 function formatPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
+  const digits = (phone || '').replace(/\D/g, '');
   if (digits.length === 13 && digits.startsWith('55')) {
     return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
   }
@@ -510,7 +511,10 @@ function formatPhone(phone: string): string {
   if (digits.length === 10) {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
   }
-  return phone;
+  if (digits.length === 9) {
+    return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  }
+  return phone || 'Sem telefone';
 }
 
 function getPhoneTypeBadgeColor(type: string): string {
