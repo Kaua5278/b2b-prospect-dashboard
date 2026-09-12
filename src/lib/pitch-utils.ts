@@ -57,24 +57,34 @@ Topa uma conversa rápida de 10 min para eu mostrar como funciona? Sem compromis
 Abs!`;
 }
 
+/** Monta a URL do WhatsApp com o texto pré-preenchido */
+export function buildWhatsAppUrl(phone: string, text: string): string {
+  const digits = (phone || '').replace(/\D/g, '');
+  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+}
+
 /** Abre WhatsApp com o pitch pré-preenchido na conversa */
 export async function openWhatsAppWithPitch(phone: string, lead: PitchLead): Promise<void> {
   const digits = (phone || '').replace(/\D/g, '');
   if (!digits || digits.length < 8) return;
 
-  // Abre a janela IMEDIATAMENTE (no gesto do usuário) para não ser bloqueada
-  // como popup. Depois preenchemos a URL com o pitch quando estiver pronto.
-  const win = window.open('about:blank', '_blank', 'noopener,noreferrer');
+  // Abre a URL COMPLETA (wa.me + texto local) imediatamente, no gesto do clique.
+  // Isso evita o popup blocker: navegação assíncrona de about:blank para wa.me
+  // é bloqueada pelo Chrome, então usamos o pitch local (síncrono) na abertura.
+  const initialUrl = buildWhatsAppUrl(digits, localWhatsAppPitch(lead));
+  const win = window.open(initialUrl, '_blank');
+
   if (!win) {
-    // Popup bloqueado: abre direto mesmo assim
-    const pitch = await generatePitchForLead(lead);
-    window.location.href = `https://wa.me/${digits}?text=${encodeURIComponent(pitch)}`;
+    // Popup bloqueado: navega na própria aba (fallback)
+    window.location.href = initialUrl;
     return;
   }
-  win.document.title = 'Gerando mensagem...';
-  win.document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#555"><p>Gerando mensagem para WhatsApp...</p></div>';
 
-  const pitch = await generatePitchForLead(lead);
-  const text = encodeURIComponent(pitch);
-  win.location.href = `https://wa.me/${digits}?text=${text}`;
+  // Se a IA gerar um pitch melhor (assíncrono), atualiza a MESMA aba já aberta.
+  try {
+    const pitch = await generatePitchForLead(lead);
+    win.location.href = buildWhatsAppUrl(digits, pitch);
+  } catch {
+    /* mantém o pitch local já aberto */
+  }
 }
