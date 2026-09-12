@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     if (prioritizedLeads.length > 0 && supabase) {
       try {
         // Upsert sem sobrescrever leads já existentes
-        await supabase
+        const { error: upsertError } = await supabase
           .from('leads')
           .upsert(
             prioritizedLeads.map(lead => ({
@@ -116,18 +116,26 @@ export async function POST(request: NextRequest) {
             { onConflict: 'user_id,place_id', ignoreDuplicates: true }
           );
 
-        // Busca os ids reais dos leads (para update/delete por id no frontend)
-        const { data: idRows } = await supabase
-          .from('leads')
-          .select('id, place_id')
-          .eq('user_id', user.id)
-          .in('place_id', prioritizedLeads.map(l => l.place_id));
+        if (upsertError) {
+          console.error('[prospect] Upsert falhou:', upsertError.message);
+        } else {
+          // Busca os ids reais dos leads (para update/delete por id no frontend)
+          const { data: idRows, error: idError } = await supabase
+            .from('leads')
+            .select('id, place_id')
+            .eq('user_id', user.id)
+            .in('place_id', prioritizedLeads.map(l => l.place_id));
 
-        if (idRows && idRows.length > 0) {
-          const idByPlace = new Map(idRows.map((row: any) => [row.place_id, row.id]));
-          savedIds = prioritizedLeads.map(l => idByPlace.get(l.place_id) as string).filter(Boolean);
+          if (idError) {
+            console.error('[prospect] Falha ao buscar ids:', idError.message);
+          } else if (idRows && idRows.length > 0) {
+            const idByPlace = new Map(idRows.map((row: any) => [row.place_id, row.id]));
+            savedIds = prioritizedLeads.map(l => idByPlace.get(l.place_id) as string).filter(Boolean);
+          }
         }
-      } catch { /* Supabase save failed, continue */ }
+      } catch (err) {
+        console.error('[prospect] Erro ao salvar leads:', err);
+      }
     }
 
     // Associa o id do banco a cada lead (se disponível) para permitir

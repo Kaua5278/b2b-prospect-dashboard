@@ -272,13 +272,13 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <Link
-              href="/login"
+            <button
+              onClick={handleSignOut}
               className="lg:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/50 border border-slate-800 text-xs text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
             >
               <LogOut className="h-3.5 w-3.5" />
               Sair
-            </Link>
+            </button>
           </div>
         </header>
 
