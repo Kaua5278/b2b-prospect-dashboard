@@ -6,32 +6,59 @@ import { NextRequest, NextResponse } from 'next/server';
  * Limpa TODOS os leads do usuário autenticado.
  * Útil no plano gratuito do Supabase (liberar espaço de linhas).
  * Requer confirmação explícita (confirm = true) para evitar exclusão acidental.
+ *
+ * Auth aceita DOIS caminhos:
+ *  - Cookie de sessão (browser) — usado pelo botão do dashboard
+ *  - Authorization: Bearer <token> — para clients externos
  */
 export async function POST(request: NextRequest) {
   try {
-    const bearer = request.headers.get('authorization')?.replace('Bearer ', '');
+    const bearer = request.headers.get('authorization')?.replace('Bearer ', '') || null;
 
-    if (!bearer) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
-    }
-
-    // Cria um client autenticado com o token (via header global, funciona no server)
-    const supabase = createServerClient(
+    // ── 1. Tenta autenticar por COOKIE (browser) ─────────────────────────
+    let supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
-        global: {
-          headers: { Authorization: `Bearer ${bearer}` },
-        },
         cookies: {
           get(name: string) { return request.cookies.get(name)?.value; },
-          set(name: string, value: string, options: CookieOptions) { request.cookies.set(name, value); },
-          remove(name: string, options: CookieOptions) { request.cookies.set(name, ''); },
+          set(name: string, value: string, options: CookieOptions) {
+            request.cookies.set(name, value);
+          },
+          remove(name: string, options: CookieOptions) {
+            request.cookies.set(name, '');
+          },
         },
       }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    // ── 2. Fallback: autentica por BEARER token ──────────────────────────
+    if ((authError || !user) && bearer) {
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: { Authorization: `Bearer ${bearer}` },
+          },
+          cookies: {
+            get(name: string) { return request.cookies.get(name)?.value; },
+            set(name: string, value: string, options: CookieOptions) {
+              request.cookies.set(name, value);
+            },
+            remove(name: string, options: CookieOptions) {
+              request.cookies.set(name, '');
+            },
+          },
+        }
+      );
+      const result = await supabase.auth.getUser();
+      user = result.data.user;
+      authError = result.error;
+    }
+
     if (authError || !user) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
