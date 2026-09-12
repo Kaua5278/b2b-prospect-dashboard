@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -9,25 +9,29 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Auth via cookie de sessão (browser) OU Bearer token (client externo)
-    let supabase = createClient();
-    let { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    // Fallback: autentica via Bearer token e seta a sessão no client
     const bearer = request.headers.get('authorization')?.replace('Bearer ', '');
-    if ((authError || !user) && bearer) {
-      try {
-        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-          access_token: bearer,
-          refresh_token: '',
-        });
-        if (!sessionError && sessionData?.user) {
-          user = sessionData.user;
-          authError = null;
-        }
-      } catch { /* token inválido */ }
+
+    if (!bearer) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
+    // Cria um client autenticado com o token (via header global, funciona no server)
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: { Authorization: `Bearer ${bearer}` },
+        },
+        cookies: {
+          get(name: string) { return request.cookies.get(name)?.value; },
+          set(name: string, value: string, options: CookieOptions) { request.cookies.set(name, value); },
+          remove(name: string, options: CookieOptions) { request.cookies.set(name, ''); },
+        },
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
