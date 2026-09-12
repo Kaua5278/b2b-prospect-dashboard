@@ -1,0 +1,36 @@
+# ── Ignora TUDO na raiz, exceto o projeto B2B ──
+/*
+!/src/
+!/supabase/
+!/package.json
+!/package-lock.json
+!/tsconfig.json
+!/next.config.js
+!/tailwind.config.ts
+!/postcss.config.js
+!/next-env.d.ts
+!/.gitignore
+
+# ── Ignora TODO o resto dentro de src/ que não deve ir ──
+# (nada específico por ora)
+
+# ── Dependências e build ──────────────────────
+/node_modules/
+/.next/
+/out/
+/build/
+dist/
+
+# ── Ambiente — NUNCA commitar chaves ─────────
+.env
+.env.local
+.env*.local
+.env.production
+.env.development
+
+# ── Logs / misc ──────────────────────────────
+*.log
+npm-debug.log*
+.DS_Store
+.vscode/
+.idea/
