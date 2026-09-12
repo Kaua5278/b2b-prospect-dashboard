@@ -368,23 +368,19 @@ export default function DashboardPage() {
   // ════════════════════════════════════════════════════════════════════════
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* ── Global Header ──────────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
+        className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"
       >
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <p className="text-[11px] font-medium uppercase tracking-widest text-emerald-400/80">Online</p>
-          </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">
+          <h1 className="text-3xl font-semibold text-white tracking-tight">
             Dashboard B2B
           </h1>
-          <p className="mt-1 text-slate-400">
+          <p className="mt-2 text-sm text-slate-500">
             Prospecção automatizada + Pipeline de vendas em um só lugar
           </p>
         </div>
@@ -411,7 +407,7 @@ export default function DashboardPage() {
       {/* ── View Tabs (Lateral) ─────────────────────────────────────────
           Sidebar with function navigation on the left, content on right */}
       <Tabs orientation="vertical" value={view} onValueChange={(v) => setView(v as ViewMode)} className="w-full">
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* Left: Function sidebar */}
         <motion.aside
           initial={{ opacity: 0, x: -20 }}
@@ -419,10 +415,10 @@ export default function DashboardPage() {
           transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
           className="w-full lg:w-48 shrink-0"
         >
-          <TabsList className="grid w-full gap-1.5 h-auto bg-slate-900/50 border border-slate-700/50 p-2 grid-cols-3 lg:grid-cols-1">
+          <TabsList className="grid w-full gap-1.5 h-auto bg-slate-900/40 border border-slate-800 p-1.5 grid-cols-3 lg:grid-cols-1">
               <TabsTrigger
                 value="prospect"
-                className="justify-start gap-2 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300 data-[state=active]:border-cyan-500/30 border border-transparent rounded-xl transition-all duration-200"
+                className="justify-start gap-2 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-cyan-500/10 data-[state=active]:text-cyan-200 data-[state=active]:border-cyan-500/20 border border-transparent rounded-lg transition-all duration-200"
               >
                 <Search className="h-4 w-4 shrink-0" />
                 <span className="truncate">Prospecção</span>
@@ -434,7 +430,7 @@ export default function DashboardPage() {
               </TabsTrigger>
               <TabsTrigger
                 value="pipeline"
-                className="justify-start gap-2 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-500/30 border border-transparent rounded-xl transition-all duration-200"
+                className="justify-start gap-2 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-200 data-[state=active]:border-emerald-500/20 border border-transparent rounded-lg transition-all duration-200"
               >
                 <Briefcase className="h-4 w-4 shrink-0" />
                 <span className="truncate">Pipeline</span>
@@ -446,7 +442,7 @@ export default function DashboardPage() {
               </TabsTrigger>
               <TabsTrigger
                 value="analytics"
-                className="justify-start gap-2 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300 data-[state=active]:border-violet-500/30 border border-transparent rounded-xl transition-all duration-200"
+                className="justify-start gap-2 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-violet-500/10 data-[state=active]:text-violet-200 data-[state=active]:border-violet-500/20 border border-transparent rounded-lg transition-all duration-200"
               >
                 <BarChart3 className="h-4 w-4 shrink-0" />
                 <span className="truncate">Métricas</span>
@@ -543,24 +539,24 @@ export default function DashboardPage() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="flex items-center justify-between mb-4">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Zap className="h-5 w-5 text-cyan-400" />
+            <div className="flex items-center justify-between mb-5">
+              <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+                <Zap className="h-4 w-4 text-slate-500" />
                 Leads Novos
               </CardTitle>
               <div className="flex items-center gap-2">
                 {leads.filter(l => l.status === 'new' && l.phone_number?.replace(/\D/g, '').length >= 8).length > 0 && (
-                  <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+                  <Badge variant="outline" className="border-slate-700 text-emerald-300/80 bg-slate-800/50">
                     <Phone className="h-3 w-3 mr-1" />
                     {leads.filter(l => l.status === 'new' && l.phone_number?.replace(/\D/g, '').length >= 8).length} com telefone
                   </Badge>
                 )}
-                <Badge variant="outline" className="border-slate-600 text-slate-400">
+                <Badge variant="outline" className="border-slate-700 text-slate-400">
                   {leads.filter(l => l.status === 'new').length} leads
                 </Badge>
               </div>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               {leads.filter(l => l.status === 'new').map((lead, index) => (
                 <LeadCard
                   key={lead.place_id}
@@ -579,13 +575,11 @@ export default function DashboardPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
+            className="text-center py-20"
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-slate-800/50 border border-slate-700 mb-6">
-              <Search className="h-10 w-10 text-slate-500" />
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Nenhum lead novo encontrado</h3>
-            <p className="text-slate-400 max-w-md mx-auto mb-6">
+            <Search className="h-10 w-10 mx-auto text-slate-600 mb-5" />
+            <h3 className="text-xl font-semibold text-white mb-3">Nenhum lead novo encontrado</h3>
+            <p className="text-slate-500 max-w-md mx-auto mb-6">
               Tente ajustar os filtros ou expanda a busca para todo o estado.
             </p>
             <Button variant="outline" onClick={() => setSearchParams(null)} className="gap-2">
@@ -600,13 +594,11 @@ export default function DashboardPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
+            className="text-center py-20"
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 mb-6">
-              <Target className="h-10 w-10 text-cyan-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Comece sua prospecção</h3>
-            <p className="text-slate-400 max-w-md mx-auto">
+            <Target className="h-10 w-10 mx-auto text-slate-600 mb-5" />
+            <h3 className="text-xl font-semibold text-white mb-3">Comece sua prospecção</h3>
+            <p className="text-slate-500 max-w-md mx-auto">
               Configure os filtros acima e clique em "Iniciar Prospecção" para minerar leads de empresas sem site no OpenStreetMap.
             </p>
           </motion.div>
@@ -889,25 +881,23 @@ export default function DashboardPage() {
           transition={{ duration: 0.4, delay: 0.2 }}
         >
           {leads.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-violet-500/10 border border-violet-500/30 mb-6">
-                <BarChart3 className="h-10 w-10 text-violet-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Sem dados ainda</h3>
-              <p className="text-slate-400">Comece prospectando leads para ver suas métricas aqui.</p>
+            <div className="text-center py-20">
+              <BarChart3 className="h-10 w-10 mx-auto text-slate-600 mb-5" />
+              <h3 className="text-xl font-semibold text-white mb-3">Sem dados ainda</h3>
+              <p className="text-slate-500">Comece prospectando leads para ver suas métricas aqui.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {/* Funil */}
-              <Card className="border-slate-700/50 bg-slate-800/50 md:col-span-2 lg:col-span-3">
+              <Card className="border-slate-800 bg-slate-900/40 md:col-span-2 lg:col-span-3">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-violet-400" />
+                  <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
+                    <BarChart3 className="h-5 w-5 text-slate-500" />
                     Funil de Vendas
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     {[
                       { label: 'Total de Leads', value: analytics.total, color: 'bg-slate-500', pct: 100 },
                       { label: 'Contatados', value: analytics.contacted, color: 'bg-cyan-500', pct: analytics.total > 0 ? (analytics.contacted / analytics.total) * 100 : 0 },
@@ -936,52 +926,34 @@ export default function DashboardPage() {
 
               {/* KPI Cards */}
               <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
-                <Card className="border-slate-700/50 bg-slate-800/50 group">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <motion.div whileHover={{ rotate: 8 }} className="p-3 rounded-xl bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
-                        <TrendingUp className="h-6 w-6 text-emerald-400" />
-                      </motion.div>
-                      <div>
-                        <p className="text-2xl font-bold text-white tabular-nums">{analytics.conversionRate}%</p>
-                        <p className="text-sm text-slate-400">Taxa de Conversão</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
-                <Card className="border-slate-700/50 bg-slate-800/50 group">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <motion.div whileHover={{ rotate: 8 }} className="p-3 rounded-xl bg-cyan-500/20 group-hover:bg-cyan-500/30 transition-colors">
-                        <MessageCircle className="h-6 w-6 text-cyan-400" />
-                      </motion.div>
-                      <div>
-                        <p className="text-2xl font-bold text-white tabular-nums">{analytics.responseRate}%</p>
-                        <p className="text-sm text-slate-400">Taxa de Resposta</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
-                <Card className="border-slate-700/50 bg-slate-800/50 group">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <motion.div whileHover={{ rotate: 8 }} className="p-3 rounded-xl bg-violet-500/20 group-hover:bg-violet-500/30 transition-colors">
-                        <Target className="h-6 w-6 text-violet-400" />
-                      </motion.div>
-                      <div>
-                        <p className="text-2xl font-bold text-white tabular-nums">{analytics.withDecisionMaker}</p>
-                      <p className="text-sm text-slate-400">Decisores Identificados</p>
-                    </div>
+                <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <TrendingUp className="h-5 w-5 text-emerald-400/70" />
+                    <p className="text-sm text-slate-500">Conversão</p>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                  <p className="text-3xl font-semibold text-white tabular-nums">{analytics.conversionRate}%</p>
+                </div>
+              </motion.div>
+
+              <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
+                <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <MessageCircle className="h-5 w-5 text-cyan-400/70" />
+                    <p className="text-sm text-slate-500">Resposta</p>
+                  </div>
+                  <p className="text-3xl font-semibold text-white tabular-nums">{analytics.responseRate}%</p>
+                </div>
+              </motion.div>
+
+              <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
+                <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <Target className="h-5 w-5 text-violet-400/70" />
+                    <p className="text-sm text-slate-500">Decisores</p>
+                  </div>
+                  <p className="text-3xl font-semibold text-white tabular-nums">{analytics.withDecisionMaker}</p>
+                </div>
+              </motion.div>
           </div>
           )}
         </motion.div>
@@ -1018,36 +990,28 @@ function StatCard({
   label: string;
   color: 'cyan' | 'emerald' | 'blue' | 'violet';
 }) {
-  const colors = {
-    cyan: 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400',
-    emerald: 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400',
-    blue: 'bg-blue-500/20 border-blue-500/30 text-blue-400',
-    violet: 'bg-violet-500/20 border-violet-500/30 text-violet-400',
+  const textColors = {
+    cyan: 'text-cyan-400',
+    emerald: 'text-emerald-400',
+    blue: 'text-blue-400',
+    violet: 'text-violet-400',
   };
 
   return (
     <motion.div
-      whileHover={{ y: -3, scale: 1.02 }}
+      whileHover={{ y: -3 }}
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
     >
-      <Card className={`${colors[color]} border glass-card overflow-hidden group`}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold text-white tabular-nums">{value}</p>
-              <p className="text-xs text-slate-400 mt-1">{label}</p>
-            </div>
-            <motion.div
-              whileHover={{ rotate: 8, scale: 1.08 }}
-              className={`p-2.5 rounded-xl ${colors[color].replace('text-', 'bg-')} transition-shadow`}
-            >
-              <Icon className="h-5 w-5 text-white" />
-            </motion.div>
+      <div className="group rounded-xl bg-slate-900/40 border border-slate-800 p-5 transition-colors duration-300 hover:border-slate-700">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-3xl font-semibold text-white tabular-nums leading-none">{value}</p>
+            <p className="mt-2 text-sm text-slate-500">{label}</p>
           </div>
-          <div className={`absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r ${color === 'cyan' ? 'from-cyan-400' : color === 'emerald' ? 'from-emerald-400' : color === 'blue' ? 'from-blue-400' : 'from-violet-400'} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-        </CardContent>
-      </Card>
+          <Icon className={`h-5 w-5 ${textColors[color]} opacity-80`} />
+        </div>
+      </div>
     </motion.div>
   );
 }

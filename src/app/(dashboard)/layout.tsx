@@ -155,7 +155,7 @@ export default function DashboardLayout({
               >
                 <Shield className="h-5 w-5 text-white" />
               </motion.div>
-              <span className="font-bold text-lg bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+              <span className="font-semibold text-lg text-white tracking-tight">
                 Prospecção B2B
               </span>
             </Link>
@@ -169,10 +169,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-            <p className="px-3 pb-2 text-[11px] font-medium uppercase tracking-widest text-slate-600">
-              Menu principal
-            </p>
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               const Icon = item.icon;
@@ -183,7 +180,7 @@ export default function DashboardLayout({
                   className={cn(
                     'group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 text-cyan-300 border border-cyan-500/30'
+                      ? 'bg-cyan-500/10 text-cyan-200 border border-cyan-500/20'
                       : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                   )}
                 >
@@ -269,21 +266,12 @@ export default function DashboardLayout({
             >
               <Menu className="h-6 w-6" />
             </button>
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-widest text-slate-600 hidden sm:block">
-                {currentPage ? `B2B / ${currentPage.name}` : 'B2B'}
-              </p>
-              <h1 className="text-lg font-semibold text-white truncate">
-                {currentPage?.name || 'Dashboard'}
-              </h1>
-            </div>
+            <h1 className="text-lg font-semibold text-white truncate">
+              {currentPage?.name || 'Dashboard'}
+            </h1>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-emerald-300 font-medium">Ambiente Seguro</span>
-            </div>
             <Link
               href="/login"
               className="lg:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/50 border border-slate-800 text-xs text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
@@ -299,7 +287,7 @@ export default function DashboardLayout({
           initial={reduceMotion ? undefined : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: EASE }}
-          className="p-4 lg:p-8"
+          className="px-4 lg:px-8 pt-6 pb-12"
         >
           {children}
         </motion.main>

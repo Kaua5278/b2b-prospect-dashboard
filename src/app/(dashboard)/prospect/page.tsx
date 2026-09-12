@@ -129,23 +129,19 @@ export default function ProspectPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
+        className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"
       >
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <p className="text-[11px] font-medium uppercase tracking-widest text-emerald-400/80">Prospecção ativa</p>
-          </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">
+          <h1 className="text-3xl font-semibold text-white tracking-tight">
             Nova Prospecção
           </h1>
-          <p className="mt-1 text-slate-400">
+          <p className="mt-2 text-sm text-slate-500">
             Mine leads qualificados de empresas sem site próprio no Brasil
           </p>
         </div>
@@ -267,13 +263,11 @@ export default function ProspectPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
+            className="text-center py-20"
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-slate-800/50 border border-slate-700 mb-6">
-              <Search className="h-10 w-10 text-slate-500" />
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Nenhum lead encontrado</h3>
-            <p className="text-slate-400 max-w-md mx-auto mb-6">
+            <Search className="h-10 w-10 mx-auto text-slate-600 mb-5" />
+            <h3 className="text-xl font-semibold text-white mb-3">Nenhum lead encontrado</h3>
+            <p className="text-slate-500 max-w-md mx-auto mb-6">
               Tente ajustar os filtros: expanda a busca para todo o estado, remova o filtro de "sem site" ou tente outro nicho.
             </p>
             <Button variant="outline" onClick={() => setSearchParams(null)} className="gap-2">
@@ -298,35 +292,27 @@ export default function ProspectPage() {
 }
 
 function StatCard({ icon: Icon, value, label, color }: { icon: React.ComponentType<any>; value: number; label: string; color: 'cyan' | 'emerald' | 'blue' }) {
-  const colors = {
-    cyan: 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400',
-    emerald: 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400',
-    blue: 'bg-blue-500/20 border-blue-500/30 text-blue-400',
+  const textColors = {
+    cyan: 'text-cyan-400',
+    emerald: 'text-emerald-400',
+    blue: 'text-blue-400',
   };
 
   return (
     <motion.div
-      whileHover={{ y: -3, scale: 1.02 }}
+      whileHover={{ y: -3 }}
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
     >
-      <Card className={`${colors[color]} border glass-card overflow-hidden group`}>
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-3xl font-bold text-white tabular-nums">{value}</p>
-              <p className="text-sm text-slate-400 mt-1">{label}</p>
-            </div>
-            <motion.div
-              whileHover={{ rotate: 8, scale: 1.08 }}
-              className={`p-3 rounded-xl ${colors[color].replace('text-', 'bg-')}`}
-            >
-              <Icon className="h-6 w-6 text-white" />
-            </motion.div>
+      <div className="group rounded-xl bg-slate-900/40 border border-slate-800 p-6 transition-colors duration-300 hover:border-slate-700">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-3xl font-semibold text-white tabular-nums leading-none">{value}</p>
+            <p className="mt-2 text-sm text-slate-500">{label}</p>
           </div>
-          <div className={`absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r ${color === 'cyan' ? 'from-cyan-400' : color === 'emerald' ? 'from-emerald-400' : 'from-blue-400'} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-        </CardContent>
-      </Card>
+          <Icon className={`h-5 w-5 ${textColors[color]} opacity-80`} />
+        </div>
+      </div>
     </motion.div>
   );
 }

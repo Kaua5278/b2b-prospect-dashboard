@@ -176,23 +176,19 @@ export default function PipelinePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
+        className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"
       >
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <p className="text-[11px] font-medium uppercase tracking-widest text-emerald-400/80">Funil de vendas</p>
-          </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">
+          <h1 className="text-3xl font-semibold text-white tracking-tight">
             Pipeline de Vendas
           </h1>
-          <p className="mt-1 text-slate-400">
+          <p className="mt-2 text-sm text-slate-500">
             Gerencie seus leads contatados e acompanhe o funil de vendas
           </p>
         </div>
@@ -262,15 +258,13 @@ export default function PipelinePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
+            className="text-center py-20"
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-slate-800/50 border border-slate-700 mb-4">
-              <Search className="h-10 w-10 text-slate-500" />
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <Search className="h-10 w-10 mx-auto text-slate-600 mb-5" />
+            <h3 className="text-xl font-semibold text-white mb-3">
               {activeTab === 'all' ? 'Nenhum lead encontrado' : `Nenhum lead com status "${statusConfig[activeTab as LeadStatus]?.label || activeTab}"`}
             </h3>
-            <p className="text-slate-400">
+            <p className="text-slate-500">
               {searchQuery ? 'Tente limpar a busca ou alterar o filtro de status.' : 'Inicie uma prospecção na aba "Prospecção" para preencher seu pipeline.'}
             </p>
           </motion.div>

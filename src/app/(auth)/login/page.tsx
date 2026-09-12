@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Lock, Mail, AlertCircle, CheckCircle, Loader2, Eye, EyeOff, Shield, Sparkles, Fingerprint, ArrowRight } from 'lucide-react';
+import { Lock, Mail, AlertCircle, CheckCircle, Loader2, Eye, EyeOff, Shield, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -123,11 +123,11 @@ function LoginForm() {
           </motion.div>
           <motion.h1
             {...fadeUp(0.08)}
-            className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-tight"
+            className="text-3xl font-semibold text-white tracking-tight"
           >
             Prospecção B2B
           </motion.h1>
-          <motion.p {...fadeUp(0.14)} className="mt-2 text-sm text-slate-400">
+          <motion.p {...fadeUp(0.14)} className="mt-3 text-sm text-slate-500">
             Dashboard privado de mineração de leads
           </motion.p>
         </motion.div>
@@ -140,18 +140,12 @@ function LoginForm() {
             exit={{ opacity: 0, y: -16, scale: 0.98 }}
             transition={{ duration: 0.45, ease: EASE }}
           >
-            <Card className="glass-card shadow-2xl shadow-black/40 border-slate-700/60 overflow-hidden">
-              {/* Top accent line */}
-              <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-emerald-500 to-cyan-500" />
-
-              <CardHeader className="pb-4 pt-6">
-                <CardTitle className="text-xl flex items-center gap-2.5">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/15 border border-cyan-500/30">
-                    <Fingerprint className="h-4 w-4 text-cyan-400" />
-                  </span>
+            <Card className="bg-slate-900/60 border border-slate-800 shadow-2xl shadow-black/40">
+              <CardHeader className="pb-5 pt-7">
+                <CardTitle className="text-xl font-semibold text-white">
                   Entrar no Sistema
                 </CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardDescription className="text-slate-500">
                   Acesse sua conta para iniciar a prospecção
                 </CardDescription>
               </CardHeader>

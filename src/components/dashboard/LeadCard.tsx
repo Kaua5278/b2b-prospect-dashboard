@@ -112,22 +112,17 @@ export function LeadCard({ lead, onContact, onGeneratePitch, index }: LeadCardPr
         exit={{ opacity: 0, x: -300, scale: 0.9, transition: { duration: 0.3, ease: 'easeInOut' } }}
         transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
       >
-        <Card className="group overflow-hidden border-slate-700/50 bg-slate-800/50 backdrop-blur-sm transition-all hover:border-cyan-500/30 hover:shadow-[0_0_30px_rgba(6,182,212,0.1)]">
-          <CardContent className="p-5">
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <Card className="group overflow-hidden border-slate-800 bg-slate-900/40 transition-all duration-300 hover:border-slate-700">
+          <CardContent className="p-6">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
               {/* Company Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-3">
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 border border-cyan-500/30"
-                  >
-                    <Building2 className="h-5 w-5 text-cyan-400" />
-                  </motion.div>
+                  <Building2 className="h-5 w-5 shrink-0 text-cyan-400/80" />
                   <div className="min-w-0">
                     <h3 className="text-lg font-semibold text-white truncate">{displayName}</h3>
                     {lead.trade_name && lead.trade_name !== lead.company_name && (
-                      <p className="text-sm text-slate-400 truncate">{lead.company_name}</p>
+                      <p className="text-sm text-slate-500 truncate">{lead.company_name}</p>
                     )}
                   </div>
                 </div>
@@ -145,7 +140,7 @@ export function LeadCard({ lead, onContact, onGeneratePitch, index }: LeadCardPr
                     {lead.neighborhood ? `${lead.neighborhood}, ` : ''}{lead.city} - {lead.state}
                     <ExternalLink className="h-3 w-3 opacity-0 group-hover/loc:opacity-100 transition-opacity ml-0.5" />
                   </a>
-                  <Badge variant="outline" className="border-cyan-500/30 text-cyan-400 bg-cyan-500/10">
+                  <Badge variant="outline" className="border-slate-700 text-cyan-200/80 bg-slate-800/50">
                     {lead.niche}
                   </Badge>
                   {lead.verification === 'google' ? (
