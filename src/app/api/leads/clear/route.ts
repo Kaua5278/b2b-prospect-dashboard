@@ -9,17 +9,20 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Auth check — aceita cookie de sessão (browser) OU Bearer token (client externo)
-    const supabase = createClient();
+    // Auth via cookie de sessão (browser) OU Bearer token (client externo)
+    let supabase = createClient();
     let { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    // Fallback: tenta autenticar via Authorization header (Bearer)
-    if ((authError || !user) && request.headers.get('authorization')) {
+    // Fallback: autentica via Bearer token e seta a sessão no client
+    const bearer = request.headers.get('authorization')?.replace('Bearer ', '');
+    if ((authError || !user) && bearer) {
       try {
-        const token = request.headers.get('authorization')!.replace('Bearer ', '');
-        const { data: userData, error: tokenError } = await supabase.auth.getUser(token);
-        if (!tokenError && userData?.user) {
-          user = userData.user;
+        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+          access_token: bearer,
+          refresh_token: '',
+        });
+        if (!sessionError && sessionData?.user) {
+          user = sessionData.user;
           authError = null;
         }
       } catch { /* token inválido */ }
