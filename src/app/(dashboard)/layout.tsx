@@ -155,7 +155,7 @@ export default function DashboardLayout({
         <AuroraBackground
           variant="b2b"
           opacity={0.5}
-          speed={0.8}
+          speed={1}
           blobCount={3}
           className="absolute inset-0 size-full"
         />
