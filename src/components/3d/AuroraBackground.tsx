@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { useReducedMotion } from "framer-motion";
 
 type AuroraVariant = "b2b" | "ocean" | "lavender" | "ice" | "ember" | "forest";
 
@@ -56,7 +55,6 @@ export function AuroraBackground({
 }: AuroraBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const timeRef = useRef(0);
-  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -75,7 +73,7 @@ export function AuroraBackground({
 
     let raf: number;
     const animate = () => {
-      timeRef.current += reduceMotion ? 0.002 : 0.01 * speed;
+      timeRef.current += 0.01 * speed;
       const t = timeRef.current;
       const w = canvas.width;
       const h = canvas.height;
@@ -123,7 +121,7 @@ export function AuroraBackground({
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(raf);
     };
-  }, [variant, speed, blobCount, opacity, reduceMotion]);
+  }, [variant, speed, blobCount, opacity]);
 
   return (
     <div className={cn("relative overflow-hidden", className)}>
