@@ -599,6 +599,65 @@ export default function DashboardPage() {
       {/* VIEW: PROSPECTION                                              */}
       {/* ═════════════════════════════════════════════════════════════════ */}
       <TabsContent value="prospect" className="space-y-6 mt-0">
+        {/* Globo 3D: Presença por estado */}
+        {globeData.states.length >= 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <Card className="border-slate-800 bg-slate-900/40 overflow-hidden relative">
+              <div className="pointer-events-none absolute top-0 right-1/4 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+              <div className="flex flex-col lg:flex-row items-center">
+                {/* Copy */}
+                <div className="flex-1 p-6 md:p-8 lg:p-10 relative z-10">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300 mb-5 w-fit">
+                    <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Presença em {globeData.totalStates} estados
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white leading-[1.15] mb-3">
+                    Distribuição dos leads
+                    <br />
+                    <span className="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+                      no mapa do Brasil
+                    </span>
+                  </h2>
+                  <p className="text-sm md:text-base text-slate-400 max-w-md leading-relaxed mb-8">
+                    Arraste o globo para explorar onde suas prospecções se concentram.
+                    Arcos conectam o principal polo aos demais estados.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
+                    {globeData.states.slice(0, 3).map((s, i) => (
+                      <motion.div
+                        key={s.name}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + i * 0.1 }}
+                      >
+                        <p className="text-xl font-bold text-white">
+                          {s.count}
+                          <span className="text-base text-slate-500 ml-1">{s.name.split(' ')[0]}</span>
+                        </p>
+                        <p className="text-xs text-slate-500">leads</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+                {/* Globe */}
+                <div className="relative flex items-center justify-center w-full lg:w-[420px] shrink-0 min-h-[340px]">
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.08),transparent_65%)]" />
+                  <Globe
+                    className="relative z-10 max-w-full"
+                    size={400}
+                    markers={globeData.markers}
+                    connections={globeData.connections}
+                  />
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -991,65 +1050,6 @@ export default function DashboardPage() {
             </div>
           ) : (
             <>
-            {/* Globo 3D: Presença por estado */}
-            {globeData.states.length > 1 && (
-              <motion.div
-                initial={{ opacity: 0, y: 24, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <Card className="border-slate-800 bg-slate-900/40 overflow-hidden relative">
-                  <div className="pointer-events-none absolute top-0 right-1/4 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
-                  <div className="flex flex-col lg:flex-row items-center">
-                    {/* Copy */}
-                    <div className="flex-1 p-6 md:p-8 lg:p-10 relative z-10">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300 mb-5 w-fit">
-                        <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        Presença em {globeData.totalStates} estados
-                      </div>
-                      <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white leading-[1.15] mb-3">
-                        Distribuição dos leads
-                        <br />
-                        <span className="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
-                          no mapa do Brasil
-                        </span>
-                      </h2>
-                      <p className="text-sm md:text-base text-slate-400 max-w-md leading-relaxed mb-8">
-                        Arraste o globo para explorar onde suas prospecções se concentram.
-                        Arcos conectam o principal polo aos demais estados.
-                      </p>
-                      <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
-                        {globeData.states.slice(0, 3).map((s, i) => (
-                          <motion.div
-                            key={s.name}
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 + i * 0.1 }}
-                          >
-                            <p className="text-xl font-bold text-white">
-                              {s.count}
-                              <span className="text-base text-slate-500 ml-1">{s.name.split(' ')[0]}</span>
-                            </p>
-                            <p className="text-xs text-slate-500">leads</p>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                    {/* Globe */}
-                    <div className="relative flex items-center justify-center w-full lg:w-[420px] shrink-0 min-h-[340px]">
-                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.08),transparent_65%)]" />
-                      <Globe
-                        className="relative z-10 max-w-full"
-                        size={400}
-                        markers={globeData.markers}
-                        connections={globeData.connections}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            )}
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {/* Funil */}
               <Card className="border-slate-800 bg-slate-900/40 md:col-span-2 lg:col-span-3">
