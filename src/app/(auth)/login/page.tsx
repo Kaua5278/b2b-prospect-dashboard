@@ -123,8 +123,14 @@ function LoginForm() {
             whileHover={reduceMotion ? undefined : { scale: 1.05, rotate: -3 }}
             whileTap={reduceMotion ? undefined : { scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-500 shadow-lg shadow-cyan-500/30 mx-auto mb-5"
+            className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-500 shadow-lg shadow-cyan-500/30 mx-auto mb-5"
           >
+            {/* Animated pulsing ring */}
+            <motion.span
+              className="absolute -inset-2 rounded-3xl border-2 border-cyan-400/30"
+              animate={reduceMotion ? undefined : { scale: [1, 1.12, 1], opacity: [0.35, 0, 0.35] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+            />
             <Shield className="h-8 w-8 text-white" />
           </motion.div>
           <motion.h1

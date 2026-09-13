@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-provider';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { AuroraBackground } from '@/components/3d/AuroraBackground';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, badge: null },
@@ -149,8 +150,15 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-slate-950">
-      {/* Ambient background glow */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      {/* Ambient aurora background glow */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+        <AuroraBackground
+          variant="b2b"
+          opacity={0.5}
+          speed={0.8}
+          blobCount={3}
+          className="absolute inset-0 size-full"
+        />
         <div className="absolute -top-40 -left-40 h-[32rem] w-[32rem] rounded-full bg-cyan-500/5 blur-3xl" />
         <div className="absolute -bottom-40 -right-40 h-[32rem] w-[32rem] rounded-full bg-emerald-500/5 blur-3xl" />
       </div>
@@ -185,9 +193,15 @@ export default function DashboardLayout({
               <motion.div
                 whileHover={reduceMotion ? undefined : { scale: 1.06 }}
                 whileTap={reduceMotion ? undefined : { scale: 0.95 }}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-500 shadow-lg shadow-cyan-500/25"
+                className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-500 shadow-lg shadow-cyan-500/25"
               >
-                <Shield className="h-5 w-5 text-white" />
+                {/* Animated ring */}
+                <motion.span
+                  className="absolute -inset-1 rounded-xl bg-gradient-to-br from-cyan-400 to-emerald-400 opacity-0 blur-md"
+                  animate={reduceMotion ? undefined : { opacity: [0, 0.35, 0], scale: [0.9, 1.05, 0.9] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <Shield className="h-5 w-5 text-white relative z-10" />
               </motion.div>
               <span className="font-semibold text-lg text-white tracking-tight">
                 Prospecção B2B
@@ -306,6 +320,16 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
+            {/* Atalhos de teclado (dica) */}
+            <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/50 border border-slate-800/80 text-[11px] text-slate-500">
+              <span className="flex items-center gap-0.5">
+                <kbd className="px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-700/80 font-mono text-[10px] text-slate-400">G</kbd>
+                <kbd className="px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-700/80 font-mono text-[10px] text-slate-400">P</kbd>
+                <kbd className="px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-700/80 font-mono text-[10px] text-slate-400">N</kbd>
+              </span>
+              <span className="hidden lg:inline">navega</span>
+            </div>
+
             {/* Notificações de follow-up */}
             <button
               onClick={() => router.push('/pipeline')}

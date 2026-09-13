@@ -83,6 +83,15 @@
       transform: translateY(0);
     }
   }
+
+  @keyframes shimmer {
+    0%, 100% {
+      transform: translateX(-100%);
+    }
+    60%, 100% {
+      transform: translateX(100%);
+    }
+  }
 }
 
 @layer components {
@@ -136,6 +145,16 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+}
+
+/* Animated gradient text (hero) */
+.animate-gradient-text {
+  background-size: 200% 200%;
+  animation: gradient-text 6s ease infinite;
+}
+@keyframes gradient-text {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 /* Shimmer sweep for primary buttons */

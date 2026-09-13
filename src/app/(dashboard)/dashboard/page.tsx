@@ -22,6 +22,9 @@ import { ProspectFilters } from '@/components/dashboard/ProspectFilters';
 import { LeadCard } from '@/components/dashboard/LeadCard';
 import { PitchModal } from '@/components/dashboard/PitchModal';
 import { AnalyticsCharts } from '@/components/dashboard/AnalyticsCharts';
+import { Globe } from '@/components/3d/Globe';
+import { AnimatedNumber, TiltCard } from '@/components/3d/MotionBits';
+import { stateCoord } from '@/lib/br-states';
 import { createClient } from '@/lib/supabase/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -376,6 +379,31 @@ export default function DashboardPage() {
     };
   }, [leads]);
 
+  // ── Globe 3D: Presença por estado ─────────────────────────────────────
+  const globeData = useMemo(() => {
+    const byUF: Record<string, { count: number; lat: number; lng: number; name: string }> = {};
+    leads.forEach((l) => {
+      if (!l.state) return;
+      const sc = stateCoord(l.state);
+      if (!sc) return;
+      if (!byUF[l.state]) {
+        byUF[l.state] = { count: 0, lat: sc.lat, lng: sc.lng, name: sc.name };
+      }
+      byUF[l.state].count += 1;
+    });
+
+    const states = Object.values(byUF).sort((a, b) => b.count - a.count).slice(0, 12);
+    const markers = states.map((s) => ({ lat: s.lat, lng: s.lng, label: s.name }));
+    // Conexões do estado mais forte para os demais
+    const hub = states[0];
+    const connections = states.slice(1).map((s) => ({
+      from: [hub.lat, hub.lng] as [number, number],
+      to: [s.lat, s.lng] as [number, number],
+    }));
+
+    return { states, markers, connections, totalStates: states.length };
+  }, [leads]);
+
   // ── Helpers ────────────────────────────────────────────────────────────
   const getDisplayName = (lead: Lead): string => {
     return lead.trade_name && lead.trade_name !== lead.company_name ? lead.trade_name : lead.company_name;
@@ -414,9 +442,18 @@ export default function DashboardPage() {
         className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"
       >
         <div>
-          <h1 className="text-3xl font-semibold text-white tracking-tight">
-            Dashboard B2B
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-semibold text-white tracking-tight">
+              Dashboard B2B
+            </h1>
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-medium text-cyan-300">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400" />
+              </span>
+              Ao vivo
+            </span>
+          </div>
           <p className="mt-2 text-sm text-slate-500">
             Prospecção automatizada + Pipeline de vendas em um só lugar
           </p>
@@ -576,10 +613,25 @@ export default function DashboardPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex items-center justify-center py-16"
+            className="relative flex flex-col items-center justify-center py-16 overflow-hidden"
           >
-            <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
-            <span className="ml-3 text-slate-300">Minerando leads no OpenStreetMap...</span>
+            {/* Scaneamento glow line */}
+            <motion.div
+              className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent"
+              animate={{ top: ['20%', '80%', '20%'] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'linear' }}
+              className="relative h-14 w-14 rounded-full border-2 border-slate-700 border-t-cyan-400"
+            >
+              <div className="absolute inset-2 rounded-full border border-cyan-400/30 animate-ping" />
+            </motion.div>
+            <span className="mt-5 text-sm text-slate-300">Minerando leads no OpenStreetMap...</span>
+            <span className="mt-1.5 font-mono text-xs text-cyan-500/70 animate-pulse">
+              varredura de estabelecimentos ativa
+            </span>
           </motion.div>
         )}
 
@@ -939,6 +991,65 @@ export default function DashboardPage() {
             </div>
           ) : (
             <>
+            {/* Globo 3D: Presença por estado */}
+            {globeData.states.length > 1 && (
+              <motion.div
+                initial={{ opacity: 0, y: 24, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <Card className="border-slate-800 bg-slate-900/40 overflow-hidden relative">
+                  <div className="pointer-events-none absolute top-0 right-1/4 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+                  <div className="flex flex-col lg:flex-row items-center">
+                    {/* Copy */}
+                    <div className="flex-1 p-6 md:p-8 lg:p-10 relative z-10">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300 mb-5 w-fit">
+                        <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        Presença em {globeData.totalStates} estados
+                      </div>
+                      <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white leading-[1.15] mb-3">
+                        Distribuição dos leads
+                        <br />
+                        <span className="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+                          no mapa do Brasil
+                        </span>
+                      </h2>
+                      <p className="text-sm md:text-base text-slate-400 max-w-md leading-relaxed mb-8">
+                        Arraste o globo para explorar onde suas prospecções se concentram.
+                        Arcos conectam o principal polo aos demais estados.
+                      </p>
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
+                        {globeData.states.slice(0, 3).map((s, i) => (
+                          <motion.div
+                            key={s.name}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 + i * 0.1 }}
+                          >
+                            <p className="text-xl font-bold text-white">
+                              {s.count}
+                              <span className="text-base text-slate-500 ml-1">{s.name.split(' ')[0]}</span>
+                            </p>
+                            <p className="text-xs text-slate-500">leads</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Globe */}
+                    <div className="relative flex items-center justify-center w-full lg:w-[420px] shrink-0 min-h-[340px]">
+                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.08),transparent_65%)]" />
+                      <Globe
+                        className="relative z-10 max-w-full"
+                        size={400}
+                        markers={globeData.markers}
+                        connections={globeData.connections}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {/* Funil */}
               <Card className="border-slate-800 bg-slate-900/40 md:col-span-2 lg:col-span-3">
@@ -951,24 +1062,33 @@ export default function DashboardPage() {
                 <CardContent>
                   <div className="space-y-5">
                     {[
-                      { label: 'Total de Leads', value: analytics.total, color: 'bg-slate-500', pct: 100 },
-                      { label: 'Contatados', value: analytics.contacted, color: 'bg-cyan-500', pct: analytics.total > 0 ? (analytics.contacted / analytics.total) * 100 : 0 },
-                      { label: 'Responderam', value: analytics.replied, color: 'bg-emerald-500', pct: analytics.total > 0 ? (analytics.replied / analytics.total) * 100 : 0 },
-                      { label: 'Em Negociação', value: analytics.negotiating, color: 'bg-amber-500', pct: analytics.total > 0 ? (analytics.negotiating / analytics.total) * 100 : 0 },
-                      { label: 'Fechados (Ganhos)', value: analytics.closedWon, color: 'bg-emerald-600', pct: analytics.total > 0 ? (analytics.closedWon / analytics.total) * 100 : 0 },
+                      { label: 'Total de Leads', value: analytics.total, color: 'bg-slate-500', from: 'from-slate-400', to: 'to-slate-500', pct: 100 },
+                      { label: 'Contatados', value: analytics.contacted, color: 'bg-cyan-500', from: 'from-cyan-400', to: 'to-cyan-500', pct: analytics.total > 0 ? (analytics.contacted / analytics.total) * 100 : 0 },
+                      { label: 'Responderam', value: analytics.replied, color: 'bg-emerald-500', from: 'from-emerald-400', to: 'to-emerald-500', pct: analytics.total > 0 ? (analytics.replied / analytics.total) * 100 : 0 },
+                      { label: 'Em Negociação', value: analytics.negotiating, color: 'bg-amber-500', from: 'from-amber-400', to: 'to-amber-500', pct: analytics.total > 0 ? (analytics.negotiating / analytics.total) * 100 : 0 },
+                      { label: 'Fechados (Ganhos)', value: analytics.closedWon, color: 'bg-emerald-600', from: 'from-emerald-500', to: 'to-emerald-600', pct: analytics.total > 0 ? (analytics.closedWon / analytics.total) * 100 : 0 },
                     ].map((item) => (
                       <div key={item.label} className="space-y-1">
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-300">{item.label}</span>
-                          <span className="font-medium text-white">{item.value}</span>
+                          <span className="font-medium text-white tabular-nums">
+                            <AnimatedNumber value={item.value} />
+                          </span>
                         </div>
-                        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <div className="h-2 bg-slate-700/60 rounded-full overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${item.pct}%` }}
-                            transition={{ duration: 0.8, delay: 0.3 }}
-                            className={`h-full ${item.color} rounded-full`}
-                          />
+                            transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                            className={`relative h-full bg-gradient-to-r ${item.from} ${item.to} rounded-full`}
+                          >
+                            {/* Shimmer na barra */}
+                            <motion.span
+                              className="absolute inset-y-0 w-1/3 bg-white/30 blur-[2px]"
+                              animate={{ x: ['-100%', '400%'] }}
+                              transition={{ duration: 2, repeat: Infinity, ease: 'linear', delay: 0.3 }}
+                            />
+                          </motion.div>
                         </div>
                       </div>
                     ))}
@@ -977,35 +1097,50 @@ export default function DashboardPage() {
               </Card>
 
               {/* KPI Cards */}
+              <TiltCard maxTilt={6}>
               <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
-                <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
+                <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6 relative overflow-hidden group">
+                  <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-500/0 blur-2xl transition-all duration-500 group-hover:bg-emerald-500/15" />
                   <div className="flex items-center justify-between mb-4">
                     <TrendingUp className="h-5 w-5 text-emerald-400/70" />
                     <p className="text-sm text-slate-500">Conversão</p>
                   </div>
-                  <p className="text-3xl font-semibold text-white tabular-nums">{analytics.conversionRate}%</p>
+                  <p className="text-3xl font-semibold text-white tabular-nums">
+                    <AnimatedNumber value={parseFloat(analytics.conversionRate) || 0} />%
+                  </p>
                 </div>
               </motion.div>
+              </TiltCard>
 
+              <TiltCard maxTilt={6}>
               <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
-                <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
+                <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6 relative overflow-hidden group">
+                  <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-cyan-500/0 blur-2xl transition-all duration-500 group-hover:bg-cyan-500/15" />
                   <div className="flex items-center justify-between mb-4">
                     <MessageCircle className="h-5 w-5 text-cyan-400/70" />
                     <p className="text-sm text-slate-500">Resposta</p>
                   </div>
-                  <p className="text-3xl font-semibold text-white tabular-nums">{analytics.responseRate}%</p>
+                  <p className="text-3xl font-semibold text-white tabular-nums">
+                    <AnimatedNumber value={parseFloat(analytics.responseRate) || 0} />%
+                  </p>
                 </div>
               </motion.div>
+              </TiltCard>
 
+              <TiltCard maxTilt={6}>
               <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
-                <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
+                <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6 relative overflow-hidden group">
+                  <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-violet-500/0 blur-2xl transition-all duration-500 group-hover:bg-violet-500/15" />
                   <div className="flex items-center justify-between mb-4">
                     <Target className="h-5 w-5 text-violet-400/70" />
                     <p className="text-sm text-slate-500">Decisores</p>
                   </div>
-                  <p className="text-3xl font-semibold text-white tabular-nums">{analytics.withDecisionMaker}</p>
+                  <p className="text-3xl font-semibold text-white tabular-nums">
+                    <AnimatedNumber value={analytics.withDecisionMaker} />
+                  </p>
                 </div>
               </motion.div>
+              </TiltCard>
           </div>
 
           {/* Gráficos de evolução + meta mensal (#6) */}
@@ -1095,22 +1230,38 @@ function StatCard({
     blue: 'text-blue-400',
     violet: 'text-violet-400',
   };
+  const neonColors = {
+    cyan: 'shadow-cyan-500/20',
+    emerald: 'shadow-emerald-500/20',
+    blue: 'shadow-blue-500/20',
+    violet: 'shadow-violet-500/20',
+  };
 
   return (
-    <motion.div
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className="group rounded-xl bg-slate-900/40 border border-slate-800 p-5 transition-colors duration-300 hover:border-slate-700">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-3xl font-semibold text-white tabular-nums leading-none">{value}</p>
-            <p className="mt-2 text-sm text-slate-500">{label}</p>
+    <TiltCard maxTilt={6}>
+      <motion.div
+        whileHover={{ y: -3 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <div className={`group relative rounded-xl bg-slate-900/40 border border-slate-800 p-5 transition-colors duration-300 hover:border-slate-700 overflow-hidden`}>
+          {/* Hover glow */}
+          <div className={`pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-gradient-to-br ${textColors[color]} opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-20`} />
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-3xl font-semibold text-white tabular-nums leading-none">
+                {typeof value === 'number' ? (
+                  <AnimatedNumber value={value} />
+                ) : (
+                  <AnimatedNumber value={parseFloat(String(value).replace('%', '')) || 0} /> // anima a parte numérica
+                )}{typeof value === 'string' && value.includes('%') ? '%' : ''}
+              </p>
+              <p className="mt-2 text-sm text-slate-500">{label}</p>
+            </div>
+            <Icon className={`h-5 w-5 ${textColors[color]} opacity-80 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6`} />
           </div>
-          <Icon className={`h-5 w-5 ${textColors[color]} opacity-80`} />
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </TiltCard>
   );
 }
