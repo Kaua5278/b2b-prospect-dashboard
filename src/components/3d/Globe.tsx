@@ -138,7 +138,7 @@ export function Globe({
     const radius = Math.min(w, h) * 0.38;
     const fov = 600;
 
-    if (!dragRef.current.active) {
+    if (!dragRef.current.active && !reduceMotion) {
       rotYRef.current += autoRotateSpeed;
     }
 
@@ -235,11 +235,17 @@ export function Globe({
       }
     }
 
-    animRef.current = requestAnimationFrame(draw);
-  }, [dotColor, arcColor, markerColor, autoRotateSpeed, connections, markers]);
+    if (!reduceMotion) {
+      animRef.current = requestAnimationFrame(draw);
+    }
+  }, [dotColor, arcColor, markerColor, autoRotateSpeed, connections, markers, reduceMotion]);
 
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion) {
+      // prefers-reduced-motion: desenha um frame estático (globo visível, sem rotação)
+      draw();
+      return;
+    }
     animRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animRef.current);
   }, [draw, reduceMotion]);
