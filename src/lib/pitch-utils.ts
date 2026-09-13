@@ -37,14 +37,39 @@ export async function generatePitchForLead(lead: PitchLead, channel: 'whatsapp' 
   return localWhatsAppPitch(lead);
 }
 
+const PITCH_VARS: Record<string, string> = {
+  '{nome}': 'Olá',
+  '{nome_decisor}': 'Olá',
+  '{empresa}': 'sua empresa',
+  '{nicho}': 'seu nicho',
+  '{cidade}': '',
+  '{estado}': '',
+  '{telefone}': '',
+};
+
 /** Template local de pitch para WhatsApp (funciona sem IA/API) */
 export function localWhatsAppPitch(lead: PitchLead): string {
-  const name = lead.decision_maker_name ? `Olá, ${lead.decision_maker_name.split(' ')[0]}` : 'Olá';
+  const firstName = lead.decision_maker_name ? lead.decision_maker_name.split(' ')[0] : '';
+  const nameTxt = firstName ? `Olá, ${firstName}` : 'Olá';
   const company = lead.trade_name || lead.company_name || 'sua empresa';
   const niche = lead.niche || 'seu nicho';
   const location = lead.city ? ` aqui em ${lead.city}/${lead.state || ''}` : '';
 
-  return `${name}! Tudo bem? 👋
+  // Template personalizado do usuário (se definido) com placeholders
+  const custom = typeof window !== 'undefined' ? getTemplateSafe() : null;
+  if (custom) {
+    return renderCustomTemplate(custom, {
+      '{nome}': nameTxt,
+      '{nome_decisor}': nameTxt,
+      '{empresa}': company,
+      '{nicho}': niche,
+      '{cidade}': lead.city ? `aqui em ${lead.city}/${lead.state || ''}` : 'na sua região',
+      '{estado}': lead.state || '',
+      '{telefone}': '',
+    });
+  }
+
+  return `${nameTxt}! Tudo bem? 👋
 
 Vi que a ${company} atua no nicho de ${niche}${location} e notei que ainda não têm um site próprio.
 
@@ -55,6 +80,23 @@ Ajudamos empresas como a sua a terem presença digital profissional em poucos di
 Topa uma conversa rápida de 10 min para eu mostrar como funciona? Sem compromisso.
 
 Abs!`;
+}
+
+/** Lê o template salvo (client-only, sem throws) */
+function getTemplateSafe(): string | null {
+  try {
+    const raw = localStorage.getItem('b2b.whatsappTemplate');
+    return raw?.trim() ? raw : null;
+  } catch { return null; }
+}
+
+/** Substitui placeholders {var} no template customizado */
+export function renderCustomTemplate(template: string, vars: Record<string, string>): string {
+  let out = template;
+  Object.entries(vars).forEach(([key, value]) => {
+    out = out.split(key).join(value || '');
+  });
+  return out;
 }
 
 /** Monta a URL do WhatsApp com o texto pré-preenchido */

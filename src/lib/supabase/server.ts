@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 /**
@@ -53,4 +54,17 @@ export async function getSession() {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
   return session;
+}
+
+/**
+ * Cliente com service_role — usado SOMENTE em rotas de sistema (cron jobs)
+ * onde não existe sessão de usuário. NUNCA chamar a partir de código client.
+ * Requer SUPABASE_SERVICE_ROLE_KEY no ambiente do servidor.
+ */
+export function createServiceClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  );
 }

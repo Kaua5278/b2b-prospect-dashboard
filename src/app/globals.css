@@ -202,3 +202,204 @@ canvas {
     scroll-behavior: auto !important;
   }
 }
+
+/* ==========================================================================
+   LIGHT MODE
+   O app é dark-first com classes hardcoded (bg-slate-950, text-white...).
+   Quando <html> recebe a classe `.light`, remapeamos superfícies e textos
+   para um tema claro sem refatorar cada componente.
+   ========================================================================== */
+
+html.light {
+  color-scheme: light;
+}
+
+html.light :root {
+  --background: 210 40% 98%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+}
+
+html.light body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Fundamentos (body, min-h-screen, fundo do scrollbar) */
+html.light .bg-slate-950 {
+  background-color: #f8fafc;
+}
+html.light .bg-slate-950\/95,
+html.light .bg-slate-950\/90 {
+  background-color: rgba(248, 250, 252, 0.95);
+}
+html.light .bg-slate-950\/60 {
+  background-color: rgba(248, 250, 252, 0.75);
+}
+
+/* Cards e superfícies */
+html.light .bg-slate-900,
+html.light .bg-slate-900\/95 {
+  background-color: #ffffff;
+}
+html.light .bg-slate-900\/60 {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+html.light .bg-slate-900\/50 {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+html.light .bg-slate-900\/40 {
+  background-color: rgba(255, 255, 255, 0.75);
+}
+html.light .bg-slate-900\/30 {
+  background-color: rgba(255, 255, 255, 0.65);
+}
+html.light .bg-slate-800\/50 {
+  background-color: #e2e8f0;
+}
+html.light .bg-slate-800\/80 {
+  background-color: #cbd5e1;
+}
+html.light .bg-slate-800 {
+  background-color: #e2e8f0;
+}
+html.light .bg-slate-700\/50 {
+  background-color: #e2e8f0;
+}
+
+/* Overlays escuros que devem permanecer escuros (pitch gerando, dialog) */
+html.light .bg-slate-950\/80 {
+  background-color: rgba(2, 6, 23, 0.8);
+}
+
+/* Acentos cyan/emerald em superfícies claras ficarem legíveis */
+html.light .text-cyan-200 {
+  color: #0e7490;
+}
+html.light .text-cyan-200\/80 {
+  color: rgba(14, 116, 144, 0.85);
+}
+html.light .text-cyan-300 {
+  color: #0891b2;
+}
+html.light .text-cyan-400 {
+  color: #0891b2;
+}
+html.light .text-emerald-300 {
+  color: #047857;
+}
+html.light .text-emerald-300\/80 {
+  color: rgba(4, 120, 87, 0.85);
+}
+html.light .text-emerald-400 {
+  color: #059669;
+}
+/* Fundos translúcidos de badges */
+html.light .bg-cyan-500\/20 {
+  background-color: rgba(6, 182, 212, 0.15);
+}
+html.light .bg-emerald-500\/20 {
+  background-color: rgba(16, 185, 129, 0.15);
+}
+
+/* Bordas */
+html.light .border-slate-800 {
+  border-color: #e2e8f0;
+}
+html.light .border-slate-800\/80 {
+  border-color: rgba(226, 232, 240, 0.9);
+}
+html.light .border-slate-700 {
+  border-color: #cbd5e1;
+}
+html.light .border-slate-700\/50 {
+  border-color: rgba(203, 213, 225, 0.7);
+}
+html.light .border-slate-600 {
+  border-color: #94a3b8;
+}
+
+/* Textos principais */
+html.light .text-white {
+  color: #0f172a;
+}
+/* ...mas mantém branco em botões/avatares com gradiente cyan→emerald */
+html.light .bg-gradient-to-r.text-white,
+html.light .bg-gradient-to-br.text-white,
+html.light .bg-gradient-to-b.text-white,
+html.light .from-cyan-500.text-white,
+html.light .to-emerald-500.text-white,
+html.light .from-cyan-500.text-white span {
+  color: #ffffff;
+}
+html.light .text-slate-300 {
+  color: #334155;
+}
+html.light .text-slate-400 {
+  color: #475569;
+}
+html.light .text-slate-500 {
+  color: #64748b;
+}
+html.light .text-slate-600 {
+  color: #94a3b8;
+}
+html.light .text-slate-700 {
+  color: #cbd5e1;
+}
+
+/* Placeholder */
+html.light .placeholder\:text-slate-500::placeholder {
+  color: #94a3b8;
+}
+
+/* Focus ring offset */
+html.light :focus-visible {
+  --tw-ring-offset-color: #f8fafc;
+}
+
+/* Botões secundários (.btn-secondary) */
+html.light .btn-secondary {
+  border-color: #cbd5e1;
+  background-color: #ffffff;
+  color: #334155;
+}
+html.light .card-hover {
+  transition: all 0.3s ease;
+}
+html.light .glass {
+  background-color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(203, 213, 225, 0.6);
+}
+html.light .glass-card {
+  background-color: rgba(255, 255, 255, 0.65);
+  border-color: rgba(203, 213, 225, 0.6);
+}
+
+/* Scrollbar */
+html.light ::-webkit-scrollbar-track {
+  background-color: #f1f5f9;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+}
+
+/* Sombras suaves em cartões claros */
+html.light .shadow-black\/20,
+html.light .shadow-black\/40 {
+  box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.15);
+}
+html.light .shadow-black\/50 {
+  box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.25);
+}

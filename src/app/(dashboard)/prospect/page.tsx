@@ -8,9 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ProspectFilters } from '@/components/dashboard/ProspectFilters';
+import { ScheduledProspections } from '@/components/dashboard/ScheduledProspections';
+import { ManualLeadDialog } from '@/components/dashboard/ManualLeadDialog';
 import { LeadCard } from '@/components/dashboard/LeadCard';
 import { PitchModal } from '@/components/dashboard/PitchModal';
 import { createClient } from '@/lib/supabase/client';
+import { UserPlus, CalendarClock, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -43,8 +46,13 @@ export default function ProspectPage() {
   } | null>(null);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showPitchModal, setShowPitchModal] = useState(false);
+  const [showManualLead, setShowManualLead] = useState(false);
+  const [showSchedules, setShowSchedules] = useState(false);
 
   const supabase = createClient();
+
+  // Triggers a refetch of pending results after manual lead creation
+  const [manualTrigger, setManualTrigger] = useState(0);
 
   const handleSearch = useCallback(async (filters: {
     niche: string;
@@ -145,7 +153,7 @@ export default function ProspectPage() {
             Mine leads qualificados de empresas sem site próprio no Brasil
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {searchParams && (
             <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}>
               <Button variant="outline" size="sm" onClick={handleRetrySearch} disabled={isLoading} className="gap-1">
@@ -154,8 +162,43 @@ export default function ProspectPage() {
               </Button>
             </motion.div>
           )}
+          <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}>
+            <Button variant="outline" size="sm" onClick={() => setShowManualLead(true)} className="gap-1">
+              <UserPlus className="h-4 w-4" />
+              Cadastrar Lead
+            </Button>
+          </motion.div>
+          <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}>
+            <Button
+              variant={showSchedules ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowSchedules(s => !s)}
+              className="gap-1"
+            >
+              <CalendarClock className="h-4 w-4" />
+              Agendadas
+              {showSchedules ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </Button>
+          </motion.div>
         </div>
       </motion.div>
+
+      {/* Prospecções agendadas (#5) — collapsible */}
+      <AnimatePresence initial={false}>
+        {showSchedules && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <ScheduledProspections
+              currentFilters={searchParams ?? { niche: '', state: '', city: '', onlyWithoutWebsite: true }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Stats Cards */}
       {leads.length > 0 && (
@@ -286,6 +329,16 @@ export default function ProspectPage() {
           setSelectedLead(null);
         }}
         lead={selectedLead}
+      />
+
+      {/* Cadastro manual de lead (#10) */}
+      <ManualLeadDialog
+        open={showManualLead}
+        onOpenChange={setShowManualLead}
+        onCreated={() => {
+          setManualTrigger(t => t + 1);
+          setSuccess('Lead cadastrado manualmente!');
+        }}
       />
     </div>
   );

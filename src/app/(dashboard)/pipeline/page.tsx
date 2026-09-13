@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, MoreVertical, Edit2, Trash2, MessageSquare, Phone, User, MapPin, Calendar, ChevronDown, ChevronUp, Download, RefreshCw, Loader2, CheckCircle, Users, XCircle, Check } from 'lucide-react';
+import { Search, Filter, MoreVertical, Edit2, Trash2, MessageSquare, Phone, User, MapPin, Calendar, ChevronDown, ChevronUp, Download, RefreshCw, Loader2, CheckCircle, Users, XCircle, Check, LayoutGrid, Table2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,13 @@ import { Separator } from '@/components/ui/separator';
 import { createClient } from '@/lib/supabase/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { KanbanBoard, KanbanLead } from '@/components/dashboard/KanbanBoard';
+import { CsvExportButton } from '@/components/dashboard/CsvExportButton';
+import { CsvImportDialog } from '@/components/dashboard/CsvImportDialog';
+import { FollowUpAlerts } from '@/components/dashboard/FollowUpAlerts';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { needsFollowUp as needsFollowUpLocal, followUpLabel as followUpLabelLocal } from '@/lib/followup';
+import { cn } from '@/lib/utils';
 
 type LeadStatus = 'new' | 'contacted' | 'replied' | 'negotiating' | 'closed_won' | 'closed_lost' | 'discarded';
 
@@ -65,6 +72,8 @@ export default function PipelinePage() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [editNotes, setEditNotes] = useState('');
   const [deletingLead, setDeletingLead] = useState<string | null>(null);
+  const [view, setView] = useState<'table' | 'kanban'>('kanban');
+  const [importOpen, setImportOpen] = useState(false);
 
   const supabase = createClient();
 
@@ -176,6 +185,34 @@ export default function PipelinePage() {
       : lead.company_name;
   };
 
+  // Atalhos de status por número (com lead "selecionado" — o primeiro da visão filtrada)
+  const shortcutTarget = filteredLeads[0];
+  const handleShortcutStatus = useCallback((index: number) => {
+    const order: LeadStatus[] = ['new', 'contacted', 'replied', 'negotiating', 'closed_won', 'closed_lost', 'discarded'];
+    const status = order[index];
+    if (shortcutTarget && status) {
+      handleStatusChange(shortcutTarget.id, status);
+    }
+  }, [shortcutTarget]);
+
+  useKeyboardShortcuts({
+    onPipeline: () => { /* já estamos no pipeline */ },
+    onFocusSearch: () => { const el = document.querySelector<HTMLInputElement>('#pipeline-search'); el?.focus(); },
+    onStatusChange: handleShortcutStatus,
+  });
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return;
+      const k = e.key.toLowerCase();
+      if (k === 't') setView('table');
+      if (k === 'k') setView('kanban');
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -193,13 +230,47 @@ export default function PipelinePage() {
             Gerencie seus leads contatados e acompanhe o funil de vendas
           </p>
         </div>
-        <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}>
-          <Button variant="outline" onClick={loadLeads} disabled={isLoading} className="gap-1">
-            <RefreshCw className="h-4 w-4" />
-            Atualizar
-          </Button>
-        </motion.div>
+        <div className="flex flex-wrap items-center gap-2">
+          <CsvExportButton leads={filteredLeads} disabled={isLoading} />
+          <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}>
+            <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-1.5" title="Importar leads de um CSV">
+              <Download className="h-4 w-4 rotate-180" />
+              Importar
+            </Button>
+          </motion.div>
+          <div className="flex items-center gap-1 rounded-lg bg-slate-900/50 border border-slate-800 p-1">
+            <button
+              onClick={() => setView('table')}
+              title="Visualizar como tabela (atalho: T)"
+              className={cn(
+                'inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors',
+                view === 'table' ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-500 hover:text-white'
+              )}
+            >
+              <Table2 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setView('kanban')}
+              title="Visualizar como Kanban (atalho: K)"
+              className={cn(
+                'inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors',
+                view === 'kanban' ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-500 hover:text-white'
+              )}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+          </div>
+          <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}>
+            <Button variant="outline" onClick={loadLeads} disabled={isLoading} className="gap-1">
+              <RefreshCw className="h-4 w-4" />
+              Atualizar
+            </Button>
+          </motion.div>
+        </div>
       </motion.div>
+
+      {/* Follow-up alerts */}
+      {!isLoading && <FollowUpAlerts leads={leads} />}
 
       {/* Search */}
       <motion.div
@@ -210,7 +281,8 @@ export default function PipelinePage() {
       >
         <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
         <Input
-          placeholder="Buscar por empresa, decisor, cidade, nicho, telefone..."
+          id="pipeline-search"
+          placeholder="Buscar por empresa, decisor, cidade, nicho, telefone... ( / )"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 bg-slate-900/50 border-slate-700 focus:border-cyan-500"
@@ -245,7 +317,7 @@ export default function PipelinePage() {
         </Tabs>
       </motion.div>
 
-      {/* Leads Table */}
+      {/* Leads — Kanban ou Tabela */}
       <AnimatePresence mode="wait">
         {isLoading ? (
           <motion.div
@@ -257,6 +329,7 @@ export default function PipelinePage() {
           </motion.div>
         ) : filteredLeads.length === 0 ? (
           <motion.div
+            key="empty"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-20"
@@ -268,6 +341,23 @@ export default function PipelinePage() {
             <p className="text-slate-500">
               {searchQuery ? 'Tente limpar a busca ou alterar o filtro de status.' : 'Inicie uma prospecção na aba "Prospecção" para preencher seu pipeline.'}
             </p>
+          </motion.div>
+        ) : view === 'kanban' ? (
+          <motion.div
+            key="kanban"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <KanbanBoard
+              leads={filteredLeads as unknown as KanbanLead[]}
+              onStatusChange={handleStatusChange}
+            />
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+              <span>💡 Arraste os cards entre colunas para mover de status.</span>
+              <span className="text-slate-600">•</span>
+              <span>Atalhos: <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-slate-700 bg-slate-800 px-1 font-mono text-[10px] text-slate-300">T</kbd> tabela · <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-slate-700 bg-slate-800 px-1 font-mono text-[10px] text-slate-300">K</kbd> kanban · <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-slate-700 bg-slate-800 px-1 font-mono text-[10px] text-slate-300">1-7</kbd> mudar status do 1º lead da lista</span>
+            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -366,9 +456,17 @@ export default function PipelinePage() {
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             {lead.contacted_at ? (
-                              <span className="text-sm text-slate-300">
-                                {format(new Date(lead.contacted_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-slate-300">
+                                  {format(new Date(lead.contacted_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                                </span>
+                                {lead.status === 'contacted' && needsFollowUpLocal(lead) && (
+                                  <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-400 bg-amber-500/10 animate-pulse">
+                                    <Clock className="h-2.5 w-2.5 mr-1" />
+                                    Follow-up {followUpLabelLocal(lead)}
+                                  </Badge>
+                                )}
+                              </div>
                             ) : (
                               <span className="text-sm text-slate-500">
                                 {format(new Date(lead.created_at), 'dd/MM/yyyy', { locale: ptBR })}
@@ -493,6 +591,9 @@ export default function PipelinePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Import CSV */}
+      <CsvImportDialog open={importOpen} onOpenChange={setImportOpen} onImported={loadLeads} />
     </div>
   );
 }

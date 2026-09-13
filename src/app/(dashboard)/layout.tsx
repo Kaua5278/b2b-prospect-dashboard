@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
-import { User, LogOut, LayoutDashboard, Users, Target, ChevronRight, Menu, X, Shield, Sparkles, BarChart3, Search, Briefcase, LifeBuoy } from 'lucide-react';
+import { User, LogOut, LayoutDashboard, Users, Target, ChevronRight, Menu, X, Shield, Sparkles, BarChart3, Search, Briefcase, LifeBuoy, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/theme-provider';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, badge: null },
@@ -87,6 +89,38 @@ export default function DashboardLayout({
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
+
+  // Atalhos globais de navegação (G = Dashboard, P = Pipeline, N = Prospecção)
+  useKeyboardShortcuts({
+    onDashboard: () => router.push('/dashboard'),
+    onProspect: () => router.push('/prospect'),
+    onPipeline: () => router.push('/pipeline'),
+  });
+
+  // Notificação de follow-up pendente (opcional, no topbar)
+  const [pendingFollowUps, setPendingFollowUps] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('leads')
+          .select('id, status, contacted_at, created_at')
+          .eq('status', 'contacted');
+        if (cancelled || !data) return;
+        const now = Date.now();
+        const count = data.filter((l: any) => {
+          const ref = l.contacted_at || l.created_at;
+          if (!ref) return false;
+          return now - new Date(ref).getTime() > 48 * 60 * 60 * 1000;
+        }).length;
+        setPendingFollowUps(count);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [supabase, pathname]);
 
   const handleSignOut = async () => {
     // Clear mock cookie
@@ -272,6 +306,26 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
+            {/* Notificações de follow-up */}
+            <button
+              onClick={() => router.push('/pipeline')}
+              className="relative inline-flex items-center justify-center h-9 w-9 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+              title={pendingFollowUps > 0 ? `${pendingFollowUps} lead(s) aguardando follow-up` : 'Ir para o pipeline'}
+            >
+              <Bell className="h-4 w-4" />
+              {pendingFollowUps > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white"
+                >
+                  {pendingFollowUps}
+                </motion.span>
+              )}
+            </button>
+
+            <ThemeToggle />
+
             <button
               onClick={handleSignOut}
               className="lg:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/50 border border-slate-800 text-xs text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"

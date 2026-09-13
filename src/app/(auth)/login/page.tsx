@@ -13,6 +13,7 @@ import { ParticleBackground } from '@/components/3d/ParticleBackground';
 import { createClient } from '@/lib/supabase/client';
 import { Suspense } from 'react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/theme-provider';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -105,6 +106,11 @@ function LoginForm() {
   return (
     <div className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden px-4 py-10">
       <ParticleBackground />
+
+      {/* Toggle de tema (#9) */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle />
+      </div>
 
       {/* Ambient glow accents */}
       <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />

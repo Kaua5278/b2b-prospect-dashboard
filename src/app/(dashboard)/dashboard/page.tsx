@@ -21,6 +21,7 @@ import { Separator } from '@/components/ui/separator';
 import { ProspectFilters } from '@/components/dashboard/ProspectFilters';
 import { LeadCard } from '@/components/dashboard/LeadCard';
 import { PitchModal } from '@/components/dashboard/PitchModal';
+import { AnalyticsCharts } from '@/components/dashboard/AnalyticsCharts';
 import { createClient } from '@/lib/supabase/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -937,6 +938,7 @@ export default function DashboardPage() {
               <p className="text-slate-500">Comece prospectando leads para ver suas métricas aqui.</p>
             </div>
           ) : (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {/* Funil */}
               <Card className="border-slate-800 bg-slate-900/40 md:col-span-2 lg:col-span-3">
@@ -1005,6 +1007,10 @@ export default function DashboardPage() {
                 </div>
               </motion.div>
           </div>
+
+          {/* Gráficos de evolução + meta mensal (#6) */}
+          <AnalyticsCharts leads={leads} />
+            </>
           )}
         </motion.div>
       </TabsContent>
