@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils";
 import { useRef, useEffect, useCallback } from "react";
-import { useReducedMotion } from "framer-motion";
 
 interface Marker {
   lat: number;
@@ -102,7 +101,6 @@ export function Globe({
   const animRef = useRef<number>(0);
   const timeRef = useRef(0);
   const dotsRef = useRef<[number, number, number][]>([]);
-  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     const dots: [number, number, number][] = [];
@@ -138,7 +136,7 @@ export function Globe({
     const radius = Math.min(w, h) * 0.38;
     const fov = 600;
 
-    if (!dragRef.current.active && !reduceMotion) {
+    if (!dragRef.current.active) {
       rotYRef.current += autoRotateSpeed;
     }
 
@@ -235,20 +233,13 @@ export function Globe({
       }
     }
 
-    if (!reduceMotion) {
-      animRef.current = requestAnimationFrame(draw);
-    }
-  }, [dotColor, arcColor, markerColor, autoRotateSpeed, connections, markers, reduceMotion]);
+    animRef.current = requestAnimationFrame(draw);
+  }, [dotColor, arcColor, markerColor, autoRotateSpeed, connections, markers]);
 
   useEffect(() => {
-    if (reduceMotion) {
-      // prefers-reduced-motion: desenha um frame estático (globo visível, sem rotação)
-      draw();
-      return;
-    }
     animRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animRef.current);
-  }, [draw, reduceMotion]);
+  }, [draw]);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     dragRef.current = {
