@@ -38,6 +38,7 @@ export function setTheme(t: 'dark' | 'light') {
 }
 export function applyTheme(t: 'dark' | 'light') {
   const root = document.documentElement;
+  root.classList.toggle('light', t === 'light');
   root.classList.toggle('dark', t === 'dark');
   root.style.colorScheme = t;
 }
