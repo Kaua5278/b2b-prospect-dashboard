@@ -795,19 +795,17 @@ export default function DashboardPage() {
         >
           <Tabs value={pipelineTab} onValueChange={(v) => setPipelineTab(v as LeadStatus | 'all')} className="w-full">
             <div className="overflow-x-auto -mx-1 px-1 pb-1">
-              <TabsList className="inline-flex w-max min-w-full justify-start lg:grid lg:w-full lg:grid-cols-8 bg-slate-900/50 border border-slate-700/50">
+              <TabsList className="inline-flex w-max min-w-full justify-start h-auto lg:grid lg:w-full lg:grid-cols-8 bg-slate-900/50 border border-slate-700/50">
                 {(['all', 'new', 'contacted', 'replied', 'negotiating', 'closed_won', 'closed_lost', 'discarded'] as const).map((tab) => (
                   <TabsTrigger
                     key={tab}
                     value={tab}
-                    className="py-2 px-3 text-xs font-medium data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300 data-[state=active]:border-cyan-500/30 whitespace-nowrap"
+                    className="py-2.5 px-3 text-xs font-medium data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300 data-[state=active]:border-cyan-500/30 whitespace-nowrap"
                   >
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="capitalize">{tab === 'all' ? 'Todos' : statusConfig[tab as LeadStatus]?.label}</span>
-                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-800/50">
-                        {tabCounts[tab]}
-                      </span>
-                    </div>
+                    <span className="capitalize">{tab === 'all' ? 'Todos' : statusConfig[tab as LeadStatus]?.label}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-800/50 tabular-nums">
+                      {tabCounts[tab]}
+                    </span>
                   </TabsTrigger>
                 ))}
               </TabsList>
