@@ -38,18 +38,9 @@ function LoginForm() {
     setSuccess('');
     setIsLoading(true);
 
-    // Validação estrita: APENAS esta credencial funciona
-    const VALID_EMAIL = 'shlia@b2b.com';
-    const VALID_PASSWORD = 'admin';
-    
-    if (email.trim().toLowerCase() !== VALID_EMAIL || password !== VALID_PASSWORD) {
-      setError('Credenciais inválidas. Acesso restrito.');
-      setIsLoading(false);
-      return;
-    }
-
-    // Mapeia senha 'admin' -> 'admin123' para compatibilidade Supabase (mín 8 chars)
-    const passwordForAuth = password === 'admin' ? 'admin123' : password;
+    // Autenticação via Supabase Auth — qualquer conta válida criada pelo
+    // admin pode logar (shlia@b2b.com foi migrada para admin via app_metadata).
+    const passwordForAuth = password;
 
     try {
       const { error } = await supabase.auth.signInWithPassword({

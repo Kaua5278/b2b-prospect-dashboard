@@ -1605,9 +1605,8 @@ export default function DashboardPage() {
               A conta <span className="font-medium text-white">{accountToDelete?.email}</span>{' '}
               será excluída <span className="text-red-400 font-medium">permanentemente</span>, junto com
               todos os leads que ela criou. Esta ação não pode ser desfeita.
-              {accountToDelete?.leadsCount && accountToDelete.leadsCount > 0 && (
-                <> <span className="text-slate-300">({accountToDelete.leadsCount} leads serão removidos).</span>
-              </>
+              {accountToDelete != null && accountToDelete.leadsCount > 0 && (
+                <> <span className="text-slate-300">({accountToDelete.leadsCount} leads serão removidos).</span></>
               )}
             </DialogDescription>
           </DialogHeader>
