@@ -7,7 +7,7 @@ import {
   Phone, MessageSquare, Zap, Loader2, MoreVertical, Edit2, Trash2, Calendar,
   ChevronDown, Download, XCircle, Check, BarChart3, Target, TrendingUp,
   PhoneCall, MessageCircle, Briefcase, Eye, EyeOff, LogOut, Plus, Activity,
-  ShieldCheck, ShieldAlert, Clock
+  ShieldCheck, ShieldAlert, Clock, Eraser
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -156,6 +156,8 @@ export default function DashboardPage() {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<AccountInfo | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [accountToClearLeads, setAccountToClearLeads] = useState<AccountInfo | null>(null);
+  const [isClearingAccountLeads, setIsClearingAccountLeads] = useState(false);
   const [showDeleteOwnDialog, setShowDeleteOwnDialog] = useState(false);
   const [isDeletingOwn, setIsDeletingOwn] = useState(false);
 
@@ -442,6 +444,36 @@ export default function DashboardPage() {
       setError(err instanceof Error ? err.message : 'Erro ao deletar conta');
     } finally {
       setIsDeletingAccount(false);
+    }
+  };
+
+  // ── Contas (admin): limpar os LEADS de uma conta específica (mantém a conta) ──
+  const handleClearAccountLeads = async () => {
+    if (!accountToClearLeads) return;
+    setIsClearingAccountLeads(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await fetch('/api/leads/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          confirm: true,
+          scope: 'user',
+          userId: accountToClearLeads.id,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Erro ao limpar leads da conta');
+
+      setAccountToClearLeads(null);
+      setSuccess(`Leads da conta ${accountToClearLeads.email} foram limpos (${data.deleted} removidos). A conta foi mantida.`);
+      loadAccounts();
+      loadPipelineLeads();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao limpar leads da conta');
+    } finally {
+      setIsClearingAccountLeads(false);
     }
   };
 
@@ -1416,6 +1448,14 @@ export default function DashboardPage() {
                     <p className="text-sm text-slate-400 truncate mt-1">{acc.email}</p>
                   </div>
                   <button
+                    onClick={() => setAccountToClearLeads(acc)}
+                    className="shrink-0 p-1.5 rounded-lg text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                    title="Limpar leads desta conta (mantém a conta)"
+                    aria-label={`Limpar leads da conta ${acc.email}`}
+                  >
+                    <Eraser className="h-4 w-4" />
+                  </button>
+                  <button
                     onClick={() => setAccountToDelete(acc)}
                     className="shrink-0 p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                     title="Deletar conta"
@@ -1584,6 +1624,58 @@ export default function DashboardPage() {
                 <>
                   <Plus className="h-4 w-4" />
                   Criar conta
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Clear One Account Leads Dialog (admin) ──────────────────────── */}
+      <Dialog open={!!accountToClearLeads} onOpenChange={(open) => !open && setAccountToClearLeads(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 border border-amber-500/30">
+                <Eraser className="h-4 w-4 text-amber-400" />
+              </span>
+              Limpar leads desta conta
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-400 pt-2">
+              Isso vai excluir{' '}
+              {accountToClearLeads != null && accountToClearLeads.leadsCount > 0 ? (
+                <span className="font-medium text-white">
+                  {accountToClearLeads.leadsCount} leads
+                </span>
+              ) : (
+                <span className="font-medium text-white">os leads</span>
+              )}{' '}
+              da conta <span className="font-medium text-white">{accountToClearLeads?.email}</span>.
+              <br /><br />
+              A <span className="font-medium text-emerald-300">conta é mantida</span> — apenas os
+              leads dela são removidos, permanentemente. Esta ação{' '}
+              <span className="text-red-400 font-medium">não pode ser desfeita</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setAccountToClearLeads(null)} disabled={isClearingAccountLeads}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleClearAccountLeads}
+              disabled={isClearingAccountLeads}
+              className="gap-1.5"
+            >
+              {isClearingAccountLeads ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Limpando...
+                </>
+              ) : (
+                <>
+                  <Eraser className="h-4 w-4" />
+                  Sim, limpar leads
                 </>
               )}
             </Button>
