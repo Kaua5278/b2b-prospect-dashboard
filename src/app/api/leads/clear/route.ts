@@ -1,9 +1,13 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
+import { createServiceClient } from '@/lib/supabase/server';
 
 /**
  * POST /api/leads/clear
- * Limpa TODOS os leads do usuário autenticado.
+ * Limpa leads do banco.
+ *  - Escopo padrão: SOMENTE os leads do usuário autenticado (RLS).
+ *  - Escopo 'all' (body.scope): TODOS os leads de todas as contas —
+ *    exclusivo para admins (app_metadata.role === 'admin'). Não-admin recebe 403.
  * Útil no plano gratuito do Supabase (liberar espaço de linhas).
  * Requer confirmação explícita (confirm = true) para evitar exclusão acidental.
  *
@@ -69,7 +73,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Confirmação necessária' }, { status: 400 });
     }
 
-    // Deleta todos os leads do usuário
+    // Escopo: admins podem limpar o banco COMPLETO; não-admin, só os próprios dados
+    const isAdmin = user.app_metadata?.role === 'admin';
+    const scopeAll = body.scope === 'all';
+
+    if (scopeAll && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Apenas admins podem limpar o banco completo' },
+        { status: 403 }
+      );
+    }
+
+    if (scopeAll) {
+      // Admin: apaga TODOS os leads (service_role, sem RLS)
+      const service = createServiceClient();
+      const { data, error } = await service.from('leads').delete().neq('id', '00000000-0000-0000-0000-000000000000').select('id');
+      if (error) {
+        console.error('[clear] Erro ao limpar banco completo:', error.message);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      const deleted = Array.isArray(data) ? data.length : 0;
+      console.log(`[clear] ${user.email} (admin) limpou o banco completo: ${deleted} leads`);
+      return NextResponse.json({ success: true, deleted, scope: 'all' });
+    }
+
+    // Deleta todos os leads do usuário (RLS garante que são só os dele)
     const { data, error } = await supabase
       .from('leads')
       .delete()

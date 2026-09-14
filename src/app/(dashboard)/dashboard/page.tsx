@@ -6,7 +6,8 @@ import {
   Search, Filter, RefreshCw, AlertCircle, CheckCircle, Building2, Users, MapPin,
   Phone, MessageSquare, Zap, Loader2, MoreVertical, Edit2, Trash2, Calendar,
   ChevronDown, Download, XCircle, Check, BarChart3, Target, TrendingUp,
-  PhoneCall, MessageCircle, Briefcase, Eye, EyeOff, LogOut
+  PhoneCall, MessageCircle, Briefcase, Eye, EyeOff, LogOut, Plus, Activity,
+  ShieldCheck, ShieldAlert, Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,7 +72,19 @@ interface Lead {
   updated_at: string;
 }
 
-type ViewMode = 'prospect' | 'pipeline' | 'analytics';
+type ViewMode = 'prospect' | 'pipeline' | 'analytics' | 'accounts';
+
+interface AccountInfo {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  leadsCount: number;
+  lastActivityAt: string | null;
+  lastSignInAt: string | null;
+  createdAt: string;
+  working: boolean;
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -134,12 +147,42 @@ export default function DashboardPage() {
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
 
+  // Contas (admin) + conta própria
+  const [me, setMe] = useState<{ id: string; email: string; role: string } | null>(null);
+  const [accounts, setAccounts] = useState<AccountInfo[]>([]);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+  const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
+  const [newAccount, setNewAccount] = useState({ name: '', email: '', password: '' });
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<AccountInfo | null>(null);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [showDeleteOwnDialog, setShowDeleteOwnDialog] = useState(false);
+  const [isDeletingOwn, setIsDeletingOwn] = useState(false);
+
+  const isAdmin = me?.role === 'admin';
+
   const supabase = createClient();
 
-  // ── Load leads from Supabase on mount ──────────────────────────────────
+  // ── Load user (role) + leads on mount ───────────────────────────────────
   useEffect(() => {
     loadPipelineLeads();
+    loadMe();
   }, []);
+
+  const loadMe = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setMe({
+          id: user.id,
+          email: user.email || '',
+          role: (user.app_metadata?.role as string) || 'member',
+        });
+      }
+    } catch {
+      // sessão indisponível
+    }
+  };
 
   const loadPipelineLeads = async () => {
     try {
@@ -314,7 +357,7 @@ export default function DashboardPage() {
       const response = await fetch('/api/leads/clear', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirm: true }),
+        body: JSON.stringify({ confirm: true, scope: isAdmin ? 'all' : 'own' }),
       });
       const data = await response.json();
 
@@ -324,12 +367,115 @@ export default function DashboardPage() {
 
       setLeads([]);
       setShowClearDialog(false);
-      setSuccess(`Banco limpo! ${data.deleted} leads removidos.`);
+      setSuccess(
+        data.scope === 'all'
+          ? `Banco completo limpo! ${data.deleted} leads removidos de todas as contas.`
+          : `Seus dados foram limpos! ${data.deleted} leads removidos.`
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao limpar banco');
     } finally {
       setIsClearing(false);
     }
+  };
+
+  // ── Contas (admin): listagem ────────────────────────────────────────────
+  const loadAccounts = useCallback(async () => {
+    setIsLoadingAccounts(true);
+    try {
+      const response = await fetch('/api/admin/users');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Erro ao carregar contas');
+      setAccounts(data.accounts || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar contas');
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  }, []);
+
+  // Carrega contas quando a aba é aberta
+  useEffect(() => {
+    if (view === 'accounts' && isAdmin) loadAccounts();
+  }, [view, isAdmin, loadAccounts]);
+
+  // ── Contas (admin): criar ───────────────────────────────────────────────
+  const handleCreateAccount = async () => {
+    setIsCreatingAccount(true);
+    setError('');
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newAccount),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Erro ao criar conta');
+
+      setShowNewAccountDialog(false);
+      setNewAccount({ name: '', email: '', password: '' });
+      setSuccess(`Conta criada: ${data.account?.email}`);
+      loadAccounts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao criar conta');
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
+
+  // ── Contas (admin): deletar conta de outro usuário ──────────────────────
+  const handleDeleteAccount = async () => {
+    if (!accountToDelete) return;
+    setIsDeletingAccount(true);
+    setError('');
+    try {
+      const response = await fetch(`/api/admin/users?userId=${accountToDelete.id}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Erro ao deletar conta');
+
+      setAccountToDelete(null);
+      setSuccess(`Conta apagada: ${accountToDelete.email}`);
+      loadAccounts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao deletar conta');
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
+  // ── Conta: apagar a PRÓPRIA conta ───────────────────────────────────────
+  const handleDeleteOwnAccount = async () => {
+    setIsDeletingOwn(true);
+    setError('');
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: true }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Erro ao apagar conta');
+
+      await supabase.auth.signOut();
+      window.location.href = '/login';
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao apagar conta');
+      setIsDeletingOwn(false);
+    }
+  };
+
+  // ── Helpers de tempo relativo ───────────────────────────────────────────
+  const timeAgo = (dateStr: string | null): string => {
+    if (!dateStr) return 'nunca';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+    if (days < 1) return 'hoje';
+    if (days === 1) return 'ontem';
+    if (days < 30) return `há ${days} dias`;
+    const months = Math.floor(days / 30);
+    return `há ${months} ${months === 1 ? 'mês' : 'meses'}`;
   };
 
   // ── Pipeline: Filtered Leads ───────────────────────────────────────────
@@ -485,7 +631,7 @@ export default function DashboardPage() {
                 title="Limpar todos os leads (libera espaço no plano gratuito)"
               >
                 <Trash2 className="h-4 w-4" />
-                Limpar Banco
+                {isAdmin ? 'Limpar Banco' : 'Limpar meus dados'}
               </Button>
             </motion.div>
           )}
@@ -535,6 +681,20 @@ export default function DashboardPage() {
                 <BarChart3 className="h-4 w-4 shrink-0" />
                 <span className="truncate">Métricas</span>
               </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger
+                  value="accounts"
+                  className="justify-start gap-2 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-amber-500/10 data-[state=active]:text-amber-200 data-[state=active]:border-amber-500/20 border border-transparent rounded-lg transition-all duration-200"
+                >
+                  <Users className="h-4 w-4 shrink-0" />
+                  <span className="truncate">Contas</span>
+                  {accounts.length > 0 && (
+                    <Badge variant="outline" className="ml-auto text-xs border-amber-500/30 text-amber-400 bg-amber-500/10">
+                      {accounts.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              )}
             </TabsList>
 
           {/* Logout */}
@@ -548,6 +708,18 @@ export default function DashboardPage() {
             <LogOut className="h-4 w-4 shrink-0" />
             Sair da conta
             <span className="ml-auto text-xs text-slate-600">logout</span>
+          </motion.button>
+
+          {/* Apagar a própria conta */}
+          <motion.button
+            onClick={() => setShowDeleteOwnDialog(true)}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="mt-2 w-full flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-xl text-slate-500 border border-transparent hover:text-red-400 hover:bg-red-500/5 hover:border-red-500/20 transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5 shrink-0" />
+            Apagar minha conta
           </motion.button>
         </motion.aside>
 
@@ -1147,6 +1319,140 @@ export default function DashboardPage() {
           )}
         </motion.div>
       </TabsContent>
+
+      {/* ═════════════════════════════════════════════════════════════════ */}
+      {/* VIEW: ACCOUNTS (admin)                                          */}
+      {/* ═════════════════════════════════════════════════════════════════ */}
+      {isAdmin && (
+      <TabsContent value="accounts" className="space-y-6 mt-0">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+              <Users className="h-5 w-5 text-amber-400" />
+              Contas da equipe
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Gerencie as contas e veja quais estão trabalhando.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadAccounts}
+              disabled={isLoadingAccounts}
+              className="gap-1"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoadingAccounts ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+            <Button size="sm" onClick={() => setShowNewAccountDialog(true)} className="gap-1">
+              <Plus className="h-4 w-4" />
+              Nova conta
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Lista de contas */}
+        {isLoadingAccounts ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-amber-400" />
+          </div>
+        ) : accounts.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16"
+          >
+            <Users className="h-10 w-10 mx-auto text-slate-600 mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-1">Nenhuma conta encontrada</h3>
+            <p className="text-slate-500">Crie a primeira conta com o botão "Nova conta".</p>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {accounts.map((acc, idx) => (
+              <motion.div
+                key={acc.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="rounded-xl bg-slate-900/40 border border-slate-800 p-5 relative overflow-hidden"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-white truncate">
+                        {acc.name || acc.email.split('@')[0]}
+                      </p>
+                      {acc.role === 'admin' ? (
+                        <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]">
+                          <ShieldCheck className="h-3 w-3 mr-0.5" /> Admin
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-slate-700 text-slate-400 bg-slate-800/40 text-[10px]">
+                          Membro
+                        </Badge>
+                      )}
+                      {acc.working ? (
+                        <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 bg-emerald-500/10 text-[10px]">
+                          <span className="relative flex h-1.5 w-1.5 mr-1">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                          </span>
+                          Trabalhando
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-slate-700 text-slate-500 bg-slate-800/40 text-[10px]">
+                          Inativa
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-400 truncate mt-1">{acc.email}</p>
+                  </div>
+                  <button
+                    onClick={() => setAccountToDelete(acc)}
+                    className="shrink-0 p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    title="Deletar conta"
+                    aria-label={`Deletar conta ${acc.email}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                  <div className="rounded-lg bg-slate-800/40 border border-slate-800 p-3">
+                    <p className="text-xs text-slate-500">Leads</p>
+                    <p className="mt-0.5 font-semibold text-white tabular-nums">{acc.leadsCount}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-800/40 border border-slate-800 p-3">
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                      <Activity className="h-3 w-3" /> Última atividade
+                    </p>
+                    <p className="mt-0.5 font-semibold text-slate-200">{timeAgo(acc.lastActivityAt)}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-800/40 border border-slate-800 p-3">
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> Último login
+                    </p>
+                    <p className="mt-0.5 font-semibold text-slate-200">{timeAgo(acc.lastSignInAt)}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-800/40 border border-slate-800 p-3">
+                    <p className="text-xs text-slate-500">Criada em</p>
+                    <p className="mt-0.5 font-semibold text-slate-200">{timeAgo(acc.createdAt)}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </TabsContent>
+      )}
         </div>{/* End Right: Content */}
       </div>{/* End flex layout */}
       </Tabs>
@@ -1169,13 +1475,24 @@ export default function DashboardPage() {
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/15 border border-red-500/30">
                 <Trash2 className="h-4 w-4 text-red-400" />
               </span>
-              Limpar Banco de Dados
+              Limpar {isAdmin ? 'Banco de Dados' : 'Meus Dados'}
             </DialogTitle>
             <DialogDescription className="text-sm text-slate-400 pt-2">
-              Isso vai excluir <span className="font-medium text-white">{leads.length} leads</span> permanentemente
-              do seu banco Supabase. Esta ação <span className="text-red-400 font-medium">não pode ser desfeita</span>.
-              <br /><br />
-              Útil no plano gratuito para liberar espaço de linhas.
+              {isAdmin ? (
+                <>
+                  Isso vai excluir <span className="font-medium text-white">todos os leads de todas as contas</span>{' '}
+                  permanentemente do banco Supabase. Esta ação{' '}
+                  <span className="text-red-400 font-medium">não pode ser desfeita</span>.
+                  <br /><br />
+                  Útil no plano gratuito para liberar espaço de linhas.
+                </>
+              ) : (
+                <>
+                  Isso vai excluir <span className="font-medium text-white">{leads.length} leads</span> da sua conta{' '}
+                  permanentemente. Os dados das outras contas <span className="text-slate-300">não são afetados</span>.
+                  Esta ação <span className="text-red-400 font-medium">não pode ser desfeita</span>.
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 sm:justify-end">
@@ -1196,7 +1513,164 @@ export default function DashboardPage() {
               ) : (
                 <>
                   <Trash2 className="h-4 w-4" />
-                  Sim, limpar tudo
+                  {isAdmin ? 'Sim, limpar tudo' : 'Sim, limpar meus dados'}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── New Account Dialog (admin) ─────────────────────────────────── */}
+      <Dialog open={showNewAccountDialog} onOpenChange={setShowNewAccountDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/15 border border-cyan-500/30">
+                <Plus className="h-4 w-4 text-cyan-400" />
+              </span>
+              Nova conta
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-400 pt-2">
+              Cria uma nova conta na equipe. A pessoa poderá logar imediatamente com o e-mail e senha definidos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2">
+              <Label htmlFor="acc-name">Nome</Label>
+              <Input
+                id="acc-name"
+                placeholder="Ex: João Silva"
+                value={newAccount.name}
+                onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="acc-email">E-mail</Label>
+              <Input
+                id="acc-email"
+                type="email"
+                placeholder="exemplo@empresa.com"
+                value={newAccount.email}
+                onChange={(e) => setNewAccount({ ...newAccount, email: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="acc-password">Senha</Label>
+              <Input
+                id="acc-password"
+                type="text"
+                placeholder="Mínimo 6 caracteres"
+                value={newAccount.password}
+                onChange={(e) => setNewAccount({ ...newAccount, password: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setShowNewAccountDialog(false)} disabled={isCreatingAccount}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateAccount}
+              disabled={isCreatingAccount || !newAccount.email || !newAccount.password}
+              className="gap-1.5"
+            >
+              {isCreatingAccount ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Criando...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  Criar conta
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Account Dialog (admin) ──────────────────────────────── */}
+      <Dialog open={!!accountToDelete} onOpenChange={(open) => !open && setAccountToDelete(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/15 border border-red-500/30">
+                <Trash2 className="h-4 w-4 text-red-400" />
+              </span>
+              Deletar conta
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-400 pt-2">
+              A conta <span className="font-medium text-white">{accountToDelete?.email}</span>{' '}
+              será excluída <span className="text-red-400 font-medium">permanentemente</span>, junto com
+              todos os leads que ela criou. Esta ação não pode ser desfeita.
+              {accountToDelete?.leadsCount && accountToDelete.leadsCount > 0 && (
+                <> <span className="text-slate-300">({accountToDelete.leadsCount} leads serão removidos).</span>
+              </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setAccountToDelete(null)} disabled={isDeletingAccount}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={isDeletingAccount}
+              className="gap-1.5"
+            >
+              {isDeletingAccount ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Deletando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Sim, deletar conta
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Own Account Dialog ──────────────────────────────────── */}
+      <Dialog open={showDeleteOwnDialog} onOpenChange={setShowDeleteOwnDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/15 border border-red-500/30">
+                <Trash2 className="h-4 w-4 text-red-400" />
+              </span>
+              Apagar minha conta
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-400 pt-2">
+              Sua conta <span className="font-medium text-white">{me?.email}</span> será excluída{' '}
+              <span className="text-red-400 font-medium">permanentemente</span>, junto com todos os seus leads.
+              </DialogDescription>
+            </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setShowDeleteOwnDialog(false)} disabled={isDeletingOwn}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteOwnAccount}
+              disabled={isDeletingOwn}
+              className="gap-1.5"
+            >
+              {isDeletingOwn ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Apagando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Sim, apagar minha conta
                 </>
               )}
             </Button>
