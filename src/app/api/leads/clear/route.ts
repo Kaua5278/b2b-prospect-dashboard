@@ -93,8 +93,40 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
       const deleted = Array.isArray(data) ? data.length : 0;
-      console.log(`[clear] ${user.email} (admin) limpou o banco completo: ${deleted} leads`);
+      console.log(`[clear] ${user.email} limpou o banco completo: ${deleted} leads`);
       return NextResponse.json({ success: true, deleted, scope: 'all' });
+    }
+
+    // ── 2b. Escopo 'user': admin limpa os leads de UMA conta específica ───
+    //      Mantém a conta intacta (não mexe em auth.users / schedule).
+    if (body.scope === 'user') {
+      if (!isAdmin) {
+        return NextResponse.json(
+          { error: 'Apenas admins podem limpar leads de outra conta' },
+          { status: 403 }
+        );
+      }
+      const userId = String(body.userId || '');
+      if (!userId) {
+        return NextResponse.json({ error: 'userId obrigatório' }, { status: 400 });
+      }
+      if (userId === user.id) {
+        return NextResponse.json({ error: 'Use "Limpar meus dados" para a sua própria conta' }, { status: 400 });
+      }
+
+      const service = createServiceClient();
+      const { data, error } = await service
+        .from('leads')
+        .delete()
+        .eq('user_id', userId)
+        .select('id');
+      if (error) {
+        console.error('[clear] Erro ao limpar leads da conta:', error.message);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      const deleted = Array.isArray(data) ? data.length : 0;
+      console.log(`[clear] ${user.email} limpou ${deleted} leads da conta ${userId} (conta mantida)`);
+      return NextResponse.json({ success: true, deleted, scope: 'user', userId });
     }
 
     // Deleta todos os leads do usuário (RLS garante que são só os dele)
